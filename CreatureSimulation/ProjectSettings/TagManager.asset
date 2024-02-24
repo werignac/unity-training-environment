@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - Terrain
+  - Spine
+  - Limb
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - Session Instantiation
+  - Session 0
+  - Session 1
+  - Session 2
+  - Session 3
+  - Session 4
+  - Session 5
+  - Session 6
+  - Session 7
+  - Session 8
+  - Session 9
+  - Session 10
+  - Session 11
+  - Session 12
+  - Session 13
+  - Session 14
+  - Session 15
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
