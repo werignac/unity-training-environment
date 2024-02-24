@@ -122,7 +122,7 @@ ArticulationBody:
   m_ImplicitTensor: 1
   m_Immovable: 0
   m_UseGravity: 1
-  m_CollisionDetectionMode: 0
+  m_CollisionDetectionMode: 2
 --- !u!33 &8250891707719993609
 MeshFilter:
   m_ObjectHideFlags: 0
