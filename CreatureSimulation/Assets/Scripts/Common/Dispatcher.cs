@@ -1,38 +1,56 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using System.Reflection;
+using System.Threading.Tasks;
 using UnityEngine;
-using werignac.GeneticAlgorithm;
+using UnityEngine.SceneManagement;
 using System.IO.Pipes;
 using System.IO;
 using werignac.Creatures;
+using werignac.Utils;
 
 namespace werignac.GeneticAlgorithm
 {
+
+
 	/// <summary>
 	/// Class that communicates with the C++ evolution script.
 	/// </summary>
-	public class Dispatcher<T, R, D> : MonoBehaviour where T : SimulationInitializationData where R : RandomSimulationInitializationDataFactory<T>, new() where D : ICreatureReaderInterface<T>, new()
+	public class Dispatcher : MonoBehaviour
 	{
-		[SerializeField]
-		private PopulationController<T> populationController;
-
-		[Header("Simulation Settings")]
-		[SerializeField, Tooltip("The number of creatures to simulate. Is overwritten if a pipe is provided."), Min(0)]
-		private int populationSize;
-		private R randomDataFactory = new R();
-		private D deserializer;
-
 		// IPC fields
 		private NamedPipeClientStream pipe = null;
 		private StreamWriter sw = null;
 		private StreamReader sr = null;
 
+		private class DispatcherSettings
+		{
+			
+			public bool flushEveryCreature = false;
+
+			private static string SettingNameToField(string settingName)
+			{
+				switch (settingName)
+				{
+					case "flush_every_creature":
+						return "flushEveryCreature"; // TODO: return field instead of string field name.
+				}
+				return null;
+			}
+
+			public void SetSetting(string settingName, string value)
+			{
+				// TODO: Use reflections to get the field and assign it.
+				string fieldName = SettingNameToField(settingName);
+			}
+		}
+
+		private DispatcherSettings runtimeSettings = new DispatcherSettings();
+
 		[Header("Debugging")]
 		[SerializeField, Tooltip("Amount of time to wait before timing out on pipe connection (in seconds).")]
 		private float pipeTimeout = 10.0f;
-		[SerializeField, Tooltip("If true, always sets realtime to false.")]
-		private bool overrideRealtime = false;
 
 #if UNITY_EDITOR
 		[SerializeField, Tooltip("If true, use a preset pipe name for testing. Only available in-editor.")]
@@ -45,7 +63,8 @@ namespace werignac.GeneticAlgorithm
 		// Start is called before the first frame update
 		void Start()
 		{
-			bool isBatchMode = Application.isBatchMode;
+			DontDestroyOnLoad(gameObject);
+
 			string[] commandLineArgs = Environment.GetCommandLineArgs();
 
 			Debug.LogFormat("Command Line Args: [{0}]", string.Join(", ", commandLineArgs));
@@ -57,59 +76,77 @@ namespace werignac.GeneticAlgorithm
 			if (useTestPipeName)
 				pipename = testPipeName;
 #endif
-
+			// Connect to pipe.
 			if (pipename != null)
 			{
 				Debug.Log($"Pipe name provided: {pipename}.");
 				pipe = new NamedPipeClientStream(".", pipename);
 				pipe.Connect((int) (pipeTimeout * 1000));
 				Debug.Log($"Connected to pipe \"{pipename}\".");
-				sw = new StreamWriter(pipe); // sw.WriteLine("What's your status?"); To write to pipe
-				sr = new StreamReader(pipe); // temp = sr.ReadLine(); To read from pipe
+				sw = new StreamWriter(pipe);
+				sr = new StreamReader(pipe);
 			}
 			else
 				Debug.Log("No pipe name provided.");
-
-			populationController.onCreatureFinishedSimulation.AddListener(OnCreatureFinishedSimulation);
-			populationController.onOutOfCreatures.AddListener(CheckOutOfAllCreatures);
-			// Initialize with passed or default parameters.
-			bool realtime = !(isBatchMode || overrideRealtime);
-			populationController.Initialize(realtime);
-
-			// TODO: Start reading creatures from sw and enqueuing them onto the list
-			if (pipe != null)
-			{
-				deserializer = new D();
-				deserializer.GetOnIsDoneReading().AddListener(this.CheckOutOfAllCreatures);
-				ReadCreatures();
-			}
-			// Generate examples if no pipe is provided.
-			else
-			{
-				Debug.LogFormat($"Generating {populationSize} creatures by default.");
-				for (int i = 0; i < populationSize; i++)
-					populationController.EnqueueCreature(randomDataFactory.GenerateRandomData(i));
-			}
-		}
-
-		private async void ReadCreatures()
-		{
-			Debug.Log("Reading creatures from pipe.");
-			Debug.LogFormat($"Unknown number of creatures.");
-
-			await foreach (T creatureData in deserializer.ReadCreatures(sr))
-				populationController.EnqueueCreature(creatureData);
-		}
-
-		private void OnDestroy()
-		{
-			// Close pipe when tasks are done.
-			if (sw != null || sr != null || pipe != null)
-				Debug.Log("Cleaning pipe and streams.");
 			
-			sw?.Close();
-			sr?.Close();
-			pipe?.Close();
+			// Read commands from user.
+			ReadCommand();
+		}
+
+		private async void ReadCommand()
+		{
+			string line = await sr.ReadLineAsync();
+			line.Trim();
+
+			string[] words = line.Split(" ");
+
+			if (words.Length == 0)
+			{
+				ReadCommand();
+				return;
+			}
+
+			switch (words[0])
+			{
+				// run <experiment_name> - Open a scene with a maching name from the settings map of experiments.
+				case "run":
+					if (words.Length == 1)
+					{
+						WriteError($"Run command requires an experiment name.");
+						ReadCommand();
+						return;
+					}
+
+					string experimentName = words[1];
+
+					SimulationSettings simSettings = SimulationSettings.GetOrCreateSettings();
+					if (!simSettings.experimentNamesToScenes.TryGetValue(experimentName, out string experimentSceneName))
+					{
+						WriteError($"Experiment name \"{experimentName}\" was not recognized.");
+						ReadCommand();
+						return;
+					}
+
+					Run(experimentSceneName);
+					return;
+
+				// set <setting_name> <value> - sets a value for the dispatcher
+				case "set":
+					// TODO: add checks for words[1], and words[2].
+					runtimeSettings.SetSetting(words[1], words[2]);
+					ReadCommand();
+					return;
+				
+				// quit - closes the application.
+				case "quit":
+					Quit();
+					return;
+
+				default:
+					WriteError($"Could not recognize command \"{line}\".");
+					ReadCommand();
+					return;
+			}
 		}
 
 		/// <summary>
@@ -138,37 +175,126 @@ namespace werignac.GeneticAlgorithm
 			return value;
 		}
 
-		private void OnCreatureFinishedSimulation(T creature, float score)
+		private async void Run(string experimentSceneName)
+		{
+			// If this is the current level, just re-run.
+			bool alreadySetUp = SceneManager.GetActiveScene().name.Equals(experimentSceneName);
+			
+			// Load the correct level.
+			if (! alreadySetUp)
+			{
+				await SceneManager.LoadSceneAsync(experimentSceneName);
+			}
+
+			if (!WerignacUtils.TryGetComponentInAll(out IExperiment experiment))
+			{
+				// Print an error message.
+				WriteError($"Experiment scene for {SceneManager.GetActiveScene().name} is missing an IExperiment component.");
+				ReadCommand();
+				return;
+			}
+
+			if (!alreadySetUp)
+			{
+				experiment.GetOnCreatureScoredEvent().AddListener(OnCreatureFinishedSimulation);
+				experiment.GetOnExperimentTerminatedEvent().AddListener(OnAllSimulationsFinished);
+			}
+
+			experiment.ReadCreatures(sr);
+		}
+
+
+		private void OnCreatureFinishedSimulation(SimulationInitializationData creature, float score, string toSend)
 		{
 			Debug.LogFormat("Creature {0} finished with score: {1}", creature.Index, score);
 
 			if (pipe != null)
 			{
-				string toSend = $"{creature.Index} {score}";
 				Debug.Log($"Writing \"{toSend}\" to pipe.");
 				sw.WriteLine(toSend);
+				
+				if (runtimeSettings.flushEveryCreature)
+				{
+					sw.Flush();
+					pipe.Flush();
+				}
 			}
 		}
 
 		/// <summary>
-		/// Called when the population controller has finished all simulations
-		/// and is out of creatures.
+		/// Called when all the simulations for a run command have finished.
 		/// </summary>
-		private void CheckOutOfAllCreatures()
+		private void OnAllSimulationsFinished()
 		{
-			if (!(deserializer.GetIsDoneReading() && populationController.IsOutOfCreatures()))
-				return;
-
 			if (pipe != null)
 			{
-				// TODO: Check if we're still in the process of reading creatures from
-				// our IPC pipe.
 				sw.WriteLine("END");
+				sw.Flush();
 				pipe.Flush();
 			}
 
-			// Calls OnDestroy (?)
+			ReadCommand();
+		}
+
+		/// <summary>
+		/// Write a warning to the log and pipe.
+		/// </summary>
+		/// <param name="message"></param>
+		private void WriteWarning(string message)
+		{
+			message = $"Warning: {message}";
+			Debug.LogWarning(message);
+			if (pipe != null)
+			{
+				sw.WriteLine(message);
+				sw.Flush();
+				pipe.Flush();
+			}
+		}
+
+		/// <summary>
+		/// Write an error to the log and pipe.
+		/// </summary>
+		/// <param name="message"></param>
+		private void WriteError(string message)
+		{
+			message = $"Error: {message}";
+			Debug.LogError(message);
+			if (pipe != null)
+			{
+				sw.WriteLine(message);
+				sw.Flush();
+				pipe.Flush();
+			}
+		}
+
+		/// <summary>
+		/// Called when the user wants to stop this instance.
+		/// </summary>
+		private void Quit()
+		{
+			if (pipe != null)
+			{
+				sw.WriteLine("QUIT");
+				sw.Flush();
+				pipe.Flush();
+			}
+
 			Application.Quit();
+		}
+
+		/// <summary>
+		/// Called on Application.Quit / stopping running in UnityEditor.
+		/// </summary>
+		private void OnDestroy()
+		{
+			// Close pipe when tasks are done.
+			if (sw != null || sr != null || pipe != null)
+				Debug.Log("Cleaning pipe and streams.");
+
+			sw?.Close();
+			sr?.Close();
+			pipe?.Close();
 		}
 	}
 }

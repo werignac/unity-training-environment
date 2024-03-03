@@ -316,7 +316,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1901938778}
   - component: {fileID: 1901938780}
-  - component: {fileID: 1901938779}
+  - component: {fileID: 1901938781}
   m_Layer: 0
   m_Name: Evolution Controller
   m_TagString: Untagged
@@ -339,24 +339,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1901938779
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1901938776}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a6e32cce54ea03a408d051a6923d4d3c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  populationController: {fileID: 1901938780}
-  populationSize: 10
-  pipeTimeout: 10
-  overrideRealtime: 0
-  useTestPipeName: 1
-  testPipeName: Pipe
 --- !u!114 &1901938780
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -394,6 +376,27 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   debug: 0
+--- !u!114 &1901938781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1901938776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aaad34ede768d3a488fcef815456beed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  populationController: {fileID: 1901938780}
+  noPipePopulationSize: 32
+  OnCreatureScored:
+    m_PersistentCalls:
+      m_Calls: []
+  OnExpirementTerminated:
+    m_PersistentCalls:
+      m_Calls: []
+  overrideRealtime: 0
 --- !u!1 &1922044028
 GameObject:
   m_ObjectHideFlags: 0

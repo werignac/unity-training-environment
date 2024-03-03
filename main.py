@@ -2,6 +2,7 @@ import numpy as np
 import numpy.random
 import pandas as pd
 import random
+import matplotlib.pyplot as plt
 import os
 
 import json
@@ -14,10 +15,12 @@ import argparse
 import subprocess
 
 PIPE_PATH = '\\\\.\\pipe\\'
-PIPE_NAME = "Pipe"
+PIPE_NAME = "Pipe3"
 TERMINATOR = "END"
-SIMULATOR_PATH = "CreatureSimulation\\Builds\\02-23-2024_11-51\\CreatureSimulation.exe"
+SIMULATOR_PATH = "CreatureSimulation\\Builds\\03-02-2024_04-08\\CreatureSimulation.exe"
 SIMULATOR_ARGS = ["-batchmode", "-nographics", "-p", PIPE_NAME]
+
+#region Genetic Algorithm
 
 class RectPrism:
     def __init__(self, scale_vector=None, rotation_vector=None):
@@ -87,6 +90,9 @@ def reproduction(scored_organisms: pd.DataFrame, new_population_count=None, sexu
 
     return new_organisms.reset_index(drop=True)
 
+#endregion
+
+#region Simulation Initialization
 
 def run_simulator(simulator_path=SIMULATOR_PATH, simulator_args=SIMULATOR_ARGS):
     # From https://www.codeproject.com/Questions/5340484/How-to-send-back-data-through-Python-to-Csharp-thr
@@ -107,10 +113,35 @@ def run_simulator(simulator_path=SIMULATOR_PATH, simulator_args=SIMULATOR_ARGS):
     return pipe_handle
 
 
-def execute_epoch(organisms):
-    # From https://www.codeproject.com/Questions/5340484/How-to-send-back-data-through-Python-to-Csharp-thr
-    pipe_handle = run_simulator()
+def run_simulation(simulation_name, pipe_handle=None, *prelines, **simulator_args):
+    if pipe_handle is None:
+        pipe_handle = run_simulator(**simulator_args)
 
+    for line in prelines:
+        ret, length = win32file.WriteFile(pipe_handle, (line + "\n").encode())
+
+    ret, length = win32file.WriteFile(pipe_handle, f"run {simulation_name}\n".encode())
+
+    #TODO: Check for an error / warnings. I'll need to add a cornfirmation that the simulation was set up propertly.
+
+    return pipe_handle
+
+#endregion
+
+#region Pipe
+def write_line_pipe(pipe_handle, line, flush: bool = False):
+    ret, length = win32file.WriteFile(pipe_handle, f"{line}\n".encode())
+    if flush: #TODO: Add error checking?
+        win32file.FlushFileBuffers(pipe_handle)
+
+def close_pipe(pipe_handle):
+    win32file.FlushFileBuffers(pipe_handle)
+    win32pipe.DisconnectNamedPipe(pipe_handle)
+    win32file.CloseHandle(pipe_handle)
+#endregion
+
+#region Running Simulation
+def execute_epoch(organisms, pipe_handle):
     for i in range(organisms.shape[0]):
         creature = organisms["Creature"][i]
         message = json.dumps(creature.serialize()) + "\n"
@@ -141,19 +172,19 @@ def execute_epoch(organisms):
 
     print(f'Top Performers:\n{sorted_organisms.head(10)}')
 
-    win32file.FlushFileBuffers(pipe_handle)
-    win32pipe.DisconnectNamedPipe(pipe_handle)
-    win32file.CloseHandle(pipe_handle)
-
     return sorted_organisms
 
 
 def display_performers(best_performers):
-    for performer in best_performers:
-        args = SIMULATOR_ARGS.copy()
+    args = SIMULATOR_ARGS.copy()
+    if "-batchmode" in args:
         args.remove("-batchmode")
+    if "-nographics" in args:
         args.remove("-nographics")
-        pipe_handle = run_simulator(simulator_args=args)
+    pipe_handle = run_simulator(simulator_args=args)
+
+    for performer in best_performers:
+        run_simulation("falling_rectangular_prism", pipe_handle=pipe_handle)
 
         message = json.dumps(performer.serialize()) + "\n"
         ret, length = win32file.WriteFile(pipe_handle, message.encode())
@@ -165,32 +196,74 @@ def display_performers(best_performers):
             ret, read_message = win32file.ReadFile(pipe_handle, 1000)
             composite_message += read_message.decode()
 
-        win32file.FlushFileBuffers(pipe_handle)
-        win32pipe.DisconnectNamedPipe(pipe_handle)
-        win32file.CloseHandle(pipe_handle)
+    write_line_pipe(pipe_handle, "quit", flush=True)
+    composite_message = ""
+    while not composite_message.endswith('QUIT\r\n'):
+        ret, read_message = win32file.ReadFile(pipe_handle, 1000)
+        composite_message += read_message.decode()
+    close_pipe(pipe_handle)
+
+#endregion
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", help="if this flag is passed, don't run the Unity executable.", action="store_false")
     parser.add_argument("-e", help="number of epochs that should be run.", type=int, default=10)
+    parser.add_argument("-display", help="if this flag is passed, display the best performers.", action="store_true")
+    parser.add_argument("-stats", help="what types of statistics to show.", type=int, default=0)
     args = parser.parse_args()
     RUN_EXECUTABLE = args.t
     EPOCH_COUNT = args.e
+    DISPLAY_BEST_PERFORMERS = args.display
+    STATS = args.stats
 
     # Create an initial population
     organisms = pd.DataFrame(columns=["Creature", "Score"])
     for i in range(256):
         organisms.loc[len(organisms.index)] = [RectPrism(), 0]
 
-    best_performers = []
+    if DISPLAY_BEST_PERFORMERS:
+        best_performers = []
+
+    if STATS > 0:
+        avg_performance_per_epoch = [0]
+
+    # From https://www.codeproject.com/Questions/5340484/How-to-send-back-data-through-Python-to-Csharp-thr
+    pipe_handle = run_simulator()
+
     for i in range(EPOCH_COUNT):
-        print(f"\nEpoch {i}")
-        execute_epoch(organisms)
-        best_performers.append(organisms.head(1)["Creature"][0])
+        print(f"\nEpoch {i + 1}")
+        run_simulation("falling_rectangular_prism", pipe_handle=pipe_handle)
+        execute_epoch(organisms, pipe_handle)
+        if DISPLAY_BEST_PERFORMERS:
+            best_performers.append(organisms.head(1)["Creature"][0])
+        if STATS > 0:
+            avg_performance_per_epoch.append(np.mean(organisms.head(10)["Score"]))
         organisms = reproduction(organisms)
 
-    display_performers(best_performers)
+    write_line_pipe(pipe_handle, "quit", flush=True)
+    composite_message = ""
+    while not composite_message.endswith('QUIT\r\n'):
+        ret, read_message = win32file.ReadFile(pipe_handle, 1000)
+        composite_message += read_message.decode()
+    close_pipe(pipe_handle)
+
+
+    if DISPLAY_BEST_PERFORMERS:
+        display_performers(best_performers)
+
+    if STATS > 0:
+        ax = plt.subplot(1, 1, 1)
+        plt.title(f"Performance over Epochs")
+        plt.ylabel(f"Score")
+        plt.xlabel(f"Epoch (first epoch at 1)")
+        plt.plot(np.arange(0, EPOCH_COUNT + 1, 1), avg_performance_per_epoch)
+        plt.legend()
+        ax.grid()
+
+        plt.show()
+
 
 
 

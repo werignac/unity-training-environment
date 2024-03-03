@@ -22,6 +22,20 @@ namespace werignac.Utils
 		}
 		#endregion
 
+		#region TryGetComponentInAll
+		public static bool TryGetComponentInAll<T>(out T outComponent)
+		{
+			outComponent = default(T);
+			foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
+			{
+				outComponent = root.GetComponentInChildren<T>();
+				if (outComponent != null)
+					return true;
+			}
+			return false;
+		}
+		#endregion
+
 		#region BroadcastToAll
 		public static void BroadcastToAll(string methodName, object parameter = null)
 		{

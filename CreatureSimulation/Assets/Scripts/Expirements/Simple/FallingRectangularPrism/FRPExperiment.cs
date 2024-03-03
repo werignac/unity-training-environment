@@ -5,7 +5,7 @@ using werignac.GeneticAlgorithm;
 
 namespace werignac.FallingRectangularPrism
 {
-	public class FRPDispatcher : Dispatcher<FallingRectangularPrismData, RandomFallingRectangularPrismDataFactory, FRPCreatureReader>
+	public class FRPExperiment : Experiment<FallingRectangularPrismData, RandomFallingRectangularPrismDataFactory, FRPCreatureReader>
 	{
 	}
 }
