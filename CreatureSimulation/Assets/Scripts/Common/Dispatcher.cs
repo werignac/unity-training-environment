@@ -200,6 +200,10 @@ namespace werignac.GeneticAlgorithm
 				experiment.GetOnExperimentTerminatedEvent().AddListener(OnAllSimulationsFinished);
 			}
 
+			sw.WriteLine("SUCCESS");
+			sw.Flush();
+			pipe.Flush();
+
 			experiment.ReadCreatures(sr);
 		}
 

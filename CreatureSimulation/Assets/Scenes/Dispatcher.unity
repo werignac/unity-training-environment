@@ -166,7 +166,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pipeTimeout: 10
   useTestPipeName: 1
-  testPipeName: Pipe3
+  testPipeName: Pipe
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

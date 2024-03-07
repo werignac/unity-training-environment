@@ -4,14 +4,9 @@ import pandas as pd
 import random
 import matplotlib.pyplot as plt
 import os
-
 import json
-
-import win32file
-import win32pipe
-
+import win32file, win32pipe
 import argparse
-
 import subprocess
 
 PIPE_PATH = '\\\\.\\pipe\\'
