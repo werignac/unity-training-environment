@@ -16,3 +16,5 @@ MonoBehaviour:
     _serializedList:
     - Key: falling_rectangular_prism
       Value: FallingRectangularPrism
+    - Key: crawl
+      Value: Crawl

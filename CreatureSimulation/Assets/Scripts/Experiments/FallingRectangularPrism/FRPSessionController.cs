@@ -7,10 +7,11 @@ namespace werignac.FallingRectangularPrism
 {
 	public class FRPSessionController : SimulationSessionController<FallingRectangularPrismData>
 	{
-		protected override void InitializeCreature()
+		protected override GameObject InitializeCreature()
 		{
 			FallingRectuangularPrismComponent FRPComponent = creatureObject.GetComponentInChildren<FallingRectuangularPrismComponent>();
 			FRPComponent.Initialize(CreatureData.Scale, CreatureData.EulerRotation);
+			return creatureObject;
 		}
 	}
 }

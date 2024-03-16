@@ -110,5 +110,105 @@ namespace werignac.Utils
 		}
 
 		#endregion
+
+		#region BoundsFromMinAndMax
+		public static Bounds BoundsFromMinAndMax(Vector3 min, Vector3 max)
+		{
+			Vector3 center = (max + min) / 2;
+			Vector3 size = max - min;
+			return new Bounds(center, size);
+		}
+
+		#endregion
+
+		#region GetCompositeAABB
+		public static Bounds GetCompositeAABB(this GameObject self, bool countZeroSizeBounds = false)
+		{
+			Bounds composite = new Bounds(self.transform.position, Vector3.zero);
+			
+			Collider collider = self.GetComponent<Collider>();
+			
+			if (collider != null)
+				composite = collider.bounds;
+
+			foreach (Transform childT in self.transform)
+			{
+				Bounds childAABB = childT.gameObject.GetCompositeAABB(countZeroSizeBounds);
+				
+				if ((!countZeroSizeBounds) && childAABB.size == Vector3.zero)
+					continue;
+
+				if ((!countZeroSizeBounds) && composite.size == Vector3.zero)
+				{
+					composite = childAABB;
+					continue;
+				}
+
+				Vector3 compositeMin = Vector3.Min(composite.min, childAABB.min);
+				Vector3 compositeMax = Vector3.Max(composite.max, childAABB.max);
+
+				composite = BoundsFromMinAndMax(compositeMin, compositeMax);
+			}
+
+			return composite;
+		}
+
+		#endregion
+
+		#region GetCompositeCenterOfMass
+		
+		public static Vector3 GetCompositeCenterOfMass(this ArticulationBody self)
+		{
+			return self.gameObject.GetCompositeCenterOfMass(out float _);
+		}
+
+		private static Vector3 GetCompositeCenterOfMass(this GameObject self, out float mass)
+		{
+			Vector3 centerOfMass = self.transform.position;
+			mass = 0;
+			if (self.TryGetComponent<ArticulationBody>(out ArticulationBody articulationBody))
+			{
+				mass = articulationBody.mass;
+				centerOfMass = articulationBody.worldCenterOfMass;
+			}
+
+			foreach (Transform childT in self.transform)
+			{
+				Vector3 childCenterOfMass = childT.gameObject.GetCompositeCenterOfMass(out float childMass);
+
+				mass += childMass;
+
+				float childWeight = childMass / mass;
+
+				centerOfMass = (childWeight) * childCenterOfMass + (1 - childWeight) * centerOfMass;
+			}
+
+			return centerOfMass;
+		}
+
+		#endregion
+
+		#region GetCompositeMass
+		
+		public static float GetCompositeMass(this ArticulationBody self)
+		{
+			return self.gameObject.GetCompositeMass();
+		}
+
+		private static float GetCompositeMass(this GameObject self)
+		{
+			float mass = 0;
+			if (self.TryGetComponent<ArticulationBody>(out ArticulationBody articulationBody))
+				mass = articulationBody.mass;
+
+			foreach (Transform childT in self.transform)
+			{
+				mass += childT.gameObject.GetCompositeMass();
+			}
+
+			return mass;
+		}
+		
+		#endregion
 	}
 }

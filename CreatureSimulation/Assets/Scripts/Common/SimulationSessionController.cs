@@ -7,7 +7,7 @@ using werignac.Creatures;
 
 namespace werignac.GeneticAlgorithm
 {
-	public class SimulationSessionController<T> : MonoBehaviour
+	public class SimulationSessionController<T_InitData> : MonoBehaviour
 	{
 		[SerializeField, Tooltip("Monobehaviour that implements IFitnessEvaluator. Judges the current state of one or more creatures and returns a score.")]
 		private MonoBehaviour fitness;
@@ -33,15 +33,17 @@ namespace werignac.GeneticAlgorithm
 		[SerializeField]
 		protected GameObject creatureObject;
 
-		public T CreatureData
+		public T_InitData CreatureData
 		{
 			get;
 			private set;
 		}
 
-		public void Initialize(T _creatureData, string layer = null)
+		public void Initialize(T_InitData _creatureData, string layer = null)
 		{
 			CreatureData = _creatureData;
+
+			creatureObject = InitializeCreature();
 
 			_fitness = (IFitnessEvaluator)fitness;
 			_fitness.Initialize(creatureObject);
@@ -52,14 +54,18 @@ namespace werignac.GeneticAlgorithm
 			}
 
 			SimulationLayer = LayerMask.LayerToName(gameObject.layer);
-
-			InitializeCreature();
 		}
 
 		/// <summary>
-		/// Sets up the Creature using CreatureData.
+		/// Override for creatures who need to create gameobjects / components.
+		/// CreatureData is set up when this function is called and can be used for initialization.
 		/// </summary>
-		protected virtual void InitializeCreature() {}
+		/// <returns>The root for the creature.</returns>
+		protected virtual GameObject InitializeCreature()
+		{
+			creatureObject.BroadcastMessage("Initialize", CreatureData, SendMessageOptions.DontRequireReceiver);
+			return creatureObject;
+		}
 
 		/// <summary>
 		/// Called by Population Controller.
@@ -74,7 +80,9 @@ namespace werignac.GeneticAlgorithm
 				return false;
 			}
 
-			// TODO: Fire Neurons
+			// Tell children that a simulation step has occurred.
+			creatureObject.BroadcastMessage("OnSimulateStep", Time.fixedDeltaTime, SendMessageOptions.DontRequireReceiver);
+
 			score = _fitness.Evaluate(creatureObject);
 
 			simulationProgress += Time.fixedDeltaTime;

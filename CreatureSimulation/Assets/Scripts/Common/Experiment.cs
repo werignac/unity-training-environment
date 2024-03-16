@@ -20,7 +20,7 @@ namespace werignac.GeneticAlgorithm
 		public UnityEvent GetOnExperimentTerminatedEvent();
 	}
 
-	public class Experiment<T, R, D> : MonoBehaviour, IExperiment where T : SimulationInitializationData where R : RandomSimulationInitializationDataFactory<T>, new() where D : ICreatureReaderInterface<T>, new()
+	public class Experiment<T, R, D> : MonoBehaviour, IExperiment where T : SimulationInitializationData where R : RandomSimulationInitializationDataFactory<T>, new() where D : CreatureReader<T>, new()
 	{
 		[SerializeField]
 		private PopulationController<T> populationController;
@@ -41,8 +41,22 @@ namespace werignac.GeneticAlgorithm
 		[Header("Debugging")]
 		[SerializeField, Tooltip("If true, always sets realtime to false.")]
 		private bool overrideRealtime = false;
+#if UNITY_EDITOR
+		[SerializeField, Tooltip("If true, run the experiment on start. Will use randomly generated creatures [noPipePopulationSize].")]
+		private bool readCreatureOnStart = false;
+		[SerializeField, Tooltip("If true, break after instantiating all creatures.")]
+		private bool breakAfterReadCreatures = false;
+#endif
 
-		// Start is called before the first frame update
+
+#if UNITY_EDITOR
+		private void Start()
+		{
+			if (readCreatureOnStart)
+				ReadCreatures(null);
+		}
+#endif
+
 		private void Initialize()
 		{
 			bool isBatchMode = Application.isBatchMode;
@@ -79,6 +93,15 @@ namespace werignac.GeneticAlgorithm
 					populationController.EnqueueCreature(randomDataFactory.GenerateRandomData(i));
 				}
 			}
+
+
+#if UNITY_EDITOR
+			if (breakAfterReadCreatures)
+			{
+				Debug.Break();
+			}
+#endif
+
 		}
 
 		private void OnCreatureFinishedSimulation(T creature, float score)

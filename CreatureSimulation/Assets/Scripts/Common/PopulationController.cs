@@ -7,7 +7,7 @@ using werignac.Creatures;
 
 namespace werignac.GeneticAlgorithm
 {
-	public class PopulationController<T> : MonoBehaviour where T : SimulationInitializationData
+	public class PopulationController<T_InitData> : MonoBehaviour where T_InitData : SimulationInitializationData
 	{
 		#region Fields
 		[SerializeField, Tooltip("Simulation Session gameobject w/ SimulationSessionController (prefab).")]
@@ -19,10 +19,10 @@ namespace werignac.GeneticAlgorithm
 		/// Consider having a generic Population\<T\> controller and select
 		/// T for single-creature simulation or multi-creature simulations.
 		/// </summary>
-		private Queue<T> population = new Queue<T>();
+		private Queue<T_InitData> population = new Queue<T_InitData>();
 
 		// Instances of simulations currently running.
-		private HashSet<SimulationSessionController<T>> simulations = new HashSet<SimulationSessionController<T>>();
+		private HashSet<SimulationSessionController<T_InitData>> simulations = new HashSet<SimulationSessionController<T_InitData>>();
 
 		/// <summary>
 		/// The physics layers the sessions may use to run multiple sessions in parallel.
@@ -47,7 +47,7 @@ namespace werignac.GeneticAlgorithm
 		#region Events
 		// --- Events ---
 		public UnityEvent onOutOfCreatures = new UnityEvent();
-		public UnityEvent<T, float> onCreatureFinishedSimulation = new UnityEvent<T, float>();
+		public UnityEvent<T_InitData, float> onCreatureFinishedSimulation = new UnityEvent<T_InitData, float>();
 		#endregion Events
 
 		// --- Debugging ---
@@ -66,7 +66,7 @@ namespace werignac.GeneticAlgorithm
 		/// Expected to be called asynchornously (hence the lock).
 		/// </summary>
 		/// <param name="creature"></param>
-		public void EnqueueCreature(T creature)
+		public void EnqueueCreature(T_InitData creature)
 		{
 			lock (population)
 			{
@@ -114,10 +114,10 @@ namespace werignac.GeneticAlgorithm
 		/// </summary>
 		private void SimulateStep()
 		{
-			var toDestroys = new HashSet<SimulationSessionController<T>>();
+			var toDestroys = new HashSet<SimulationSessionController<T_InitData>>();
 			
 			Physics.Simulate(Time.fixedDeltaTime);
-			foreach(SimulationSessionController<T> controller in simulations)
+			foreach(SimulationSessionController<T_InitData> controller in simulations)
 			{
 				bool finished = controller.OnSimulateStep(out float score);
 
@@ -128,7 +128,7 @@ namespace werignac.GeneticAlgorithm
 				}
 			}
 
-			foreach(SimulationSessionController<T> toDestroy in toDestroys)
+			foreach(SimulationSessionController<T_InitData> toDestroy in toDestroys)
 			{
 				simulations.Remove(toDestroy);
 				DestroyImmediate(toDestroy.gameObject);
@@ -140,7 +140,7 @@ namespace werignac.GeneticAlgorithm
 			}
 		}
 
-		private void CreateSimulationSessionInstance(T creature, string layer = null)
+		private void CreateSimulationSessionInstance(T_InitData creature, string layer = null)
 		{
 			if (debug)
 				Debug.LogFormat("Simulating Generation Creature: {0}", creature.Index);
@@ -148,7 +148,7 @@ namespace werignac.GeneticAlgorithm
 			// TODO: Use active simulations to find a physics layer for new simulation.
 
 			var _instance = Instantiate(simulationSessionPrefab);
-			SimulationSessionController<T> _simulationSessionController = _instance.GetComponent<SimulationSessionController<T>>();
+			SimulationSessionController<T_InitData> _simulationSessionController = _instance.GetComponent<SimulationSessionController<T_InitData>>();
 			_simulationSessionController.Initialize(creature, layer);
 
 			simulations.Add(_simulationSessionController);
@@ -178,7 +178,7 @@ namespace werignac.GeneticAlgorithm
 			// The previous check confirms that there's a simulation layer avilable.
 			// Find and use it for the new simulation.
 			HashSet<string> unusedSessionLayers = new HashSet<string>(_sessionLayers);
-			foreach(SimulationSessionController<T> controller in simulations)
+			foreach(SimulationSessionController<T_InitData> controller in simulations)
 				unusedSessionLayers.Remove(controller.SimulationLayer);
 			string layer = null;
 			foreach (string _layer in unusedSessionLayers)
