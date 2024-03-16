@@ -130,7 +130,7 @@ class SimulationTask:
     Returns a line written by the simulator. Blocks.
     Returns None if the simulator has reported that it has finished.
     '''
-    def read_line(self):
+    def read_line(self, timeout=10.0, wait_step=0.5):
         self.read_lock.acquire()
 
         # If we've received the end, we're out of lines.
@@ -150,17 +150,21 @@ class SimulationTask:
             self._start_read_thread()
 
         self.read_lock.release()
+        wait_time = 0
 
         # Polling for next line. Need to poll in case event is triggered after
         # lock release but before this line.
         while True:
-            self._read_block_thread_event.wait(1)
+            self._read_block_thread_event.wait(wait_step)
             self.read_lock.acquire()
             received_line = len(self.read_buffer) > 0 and self._is_line_finished(self.read_buffer[0])
             missed_end = self._get_finished_pipe_reading()
             self.read_lock.release()
             if received_line or missed_end:
                 break
+            wait_time += wait_step
+            if (wait_time > timeout) and (timeout >= 0):
+                raise Exception(f"Timeout for {timeout} seconds when reading line.")
 
         return self.read_line()
 
@@ -354,22 +358,24 @@ if __name__ == "__main__":
         exec_args['simulator_args'] = ["-batchmode", "-nographics", "-p", pipe_name]
 
         instance = SimulationInstance('\\\\.\\pipe\\' + pipe_name, exec_args)
-        print(f"Running Experiment for {id}...")
-        instance.run_experiment("falling_rectangular_prism")
 
-        print(f"Sending Creatures for {id}...")
+        for i in range(2):
+            print(f"Running Experiment for {id}...")
+            instance.run_experiment("falling_rectangular_prism")
 
-        for i in range(512):
-            instance.send_creatures(json.dumps(main.RectPrism().serialize()))
+            print(f"Sending Creatures for {id}...")
 
-        print(f"Sending End {id}...")
-        instance.end_send_creatures()
+            for i in range(256):
+                instance.send_creatures(json.dumps(main.RectPrism().serialize()))
 
-        print(f"Reading Lines {id}...")
-        creature_line = instance.read_line()
-        while not (creature_line is None):
-            print(f"\tLine from {id}: '{creature_line}'")
+            print(f"Sending End {id}...")
+            instance.end_send_creatures()
+
+            print(f"Reading Lines {id}...")
             creature_line = instance.read_line()
+            while not (creature_line is None):
+                print(f"\tLine from {id}: '{creature_line}'")
+                creature_line = instance.read_line()
 
         instance.quit()
         print(f"Instance {id} quit.")
