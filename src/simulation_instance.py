@@ -15,7 +15,7 @@ class SimulationTaskType(Enum):
 # These keep track of the current state of the simulator and read messages back.
 # also writes messages to pipe.
 class SimulationTask:
-    def __init__(self, pipe_handle, overlap):
+    def __init__(self, pipe_handle, overlap, **kwargs):
         self.pipe_handle = pipe_handle
         self.read_thread = threading.Thread(target=self._read_content)
         self.read_lock = threading.Lock()
@@ -28,6 +28,9 @@ class SimulationTask:
         # Lines of the pipe read but not sent to user.
         # Warnings and errors are not included in here.
         self.read_buffer = []
+
+        # Extra parameters send by simulation instance. e.g. no_timeout
+        self.meta_args = kwargs
 
     def get_task_type(self):
         return NotImplemented
@@ -100,6 +103,8 @@ class SimulationTask:
                         self._add_partial_line_to_buffer(combined_split[1])
 
             # For each partial line, end the last line and add the partial line to the read_buffer.
+            # If the message read ends on a newline, read_lines will have an extra empty
+            # string at the end, marking the last line sa being complete.
             for line in read_lines:
                 self._add_partial_line_to_buffer(line)
 
@@ -163,7 +168,7 @@ class SimulationTask:
             if received_line or missed_end:
                 break
             wait_time += wait_step
-            if (wait_time > timeout) and (timeout >= 0):
+            if (wait_time > timeout) and (timeout >= 0) and not self.get_meta_arg("no_timeout"):
                 raise Exception(f"Timeout for {timeout} seconds when reading line.")
 
         return self.read_line()
@@ -177,6 +182,11 @@ class SimulationTask:
         # TODO: Check state of pipe
         win32file.FlushFileBuffers(self.pipe_handle)
 
+    def get_meta_arg(self, arg_name: str):
+        if arg_name in self.meta_args:
+            return self.meta_args[arg_name]
+        return None
+
 
 class IdleTask(SimulationTask):
     def get_task_type(self):
@@ -184,10 +194,13 @@ class IdleTask(SimulationTask):
 
 
 class ExperimentTask(SimulationTask):
-    def __init__(self, pipe_handle, overlap, experiment_name):
-        SimulationTask.__init__(self, pipe_handle, overlap)
+    def __init__(self, pipe_handle, overlap, experiment_name, **kwargs):
+        SimulationTask.__init__(self, pipe_handle, overlap, **kwargs)
+        # End for list of creatures to simulate.
         self.has_sent_end = False
+        # End for simulated creates from list of creatures to simulate.
         self.has_received_end = False
+        # Type of experiment to run. Disambiguated by Unity simulation settings.
         self.experiment_name = experiment_name
 
     def get_task_type(self):
@@ -220,8 +233,8 @@ class ExperimentTask(SimulationTask):
 
 
 class QuitTask(SimulationTask):
-    def __init__(self, pipe_handle, overlap):
-        SimulationTask.__init__(self, pipe_handle, overlap)
+    def __init__(self, pipe_handle, overlap, **kwargs):
+        SimulationTask.__init__(self, pipe_handle, overlap, **kwargs)
         self.has_received_quit = False
 
         self._start_read_thread()
@@ -251,7 +264,7 @@ class SimulationInstance:
     '''
     executable_args = {simulator_path, simulator_args}
     '''
-    def __init__(self, pipe_path_and_name, executable_args=None):
+    def __init__(self, pipe_path_and_name, executable_args=None, **kwargs):
         # From https://www.codeproject.com/Questions/5340484/How-to-send-back-data-through-Python-to-Csharp-thr
         self.pipe_handle = win32pipe.CreateNamedPipe(
             pipe_path_and_name,
@@ -271,8 +284,11 @@ class SimulationInstance:
         win32pipe.ConnectNamedPipe(self.pipe_handle, self.overlap)
         win32file.GetOverlappedResult(self.pipe_handle, self.overlap, True)
 
+        # Extra arguments for controlling behaviour. e.g. no_timeout.
+        self.meta_args = kwargs
+
         # Current (assumed) state of the simulator executable.
-        self.task: SimulationTask = IdleTask(self.pipe_handle, self.overlap)
+        self.task: SimulationTask = IdleTask(self.pipe_handle, self.overlap, **self.meta_args)
 
     def set_property(self, property_name, value):
         if self.task.get_task_type() != SimulationTaskType.IDLE:
@@ -284,7 +300,7 @@ class SimulationInstance:
         if self.task.get_task_type() != SimulationTaskType.IDLE:
             raise Exception(f"Cannot start another task while task {self.task.get_task_type()} is running.")
 
-        self.task = ExperimentTask(self.pipe_handle, self.overlap, experiment_name)
+        self.task = ExperimentTask(self.pipe_handle, self.overlap, experiment_name, **self.meta_args)
 
         self.task.signal_run_experiment()
         self.task.wait_run_experiment_response()
@@ -313,12 +329,13 @@ class SimulationInstance:
 
         self.write_line("END")
         self.flush_pipe()
+        self.task.on_has_sent_end()
 
     def quit(self):
         if self.task.get_task_type() != SimulationTaskType.IDLE:
             raise Exception("Cannot set quit whilst simulation is running.")
 
-        self.task = QuitTask(self.pipe_handle, self.overlap)
+        self.task = QuitTask(self.pipe_handle, self.overlap, **self.meta_args)
         self.task.signal_quit()
         self.task.wait_for_quit_response()
         self.task = None
@@ -336,7 +353,7 @@ class SimulationInstance:
         line = self.task.read_line()
 
         if line is None and self.task.get_task_type() == SimulationTaskType.SIMULATING:
-            self.task = IdleTask(self.pipe_handle, self.overlap)
+            self.task = IdleTask(self.pipe_handle, self.overlap, **self.meta_args)
 
         return line
 

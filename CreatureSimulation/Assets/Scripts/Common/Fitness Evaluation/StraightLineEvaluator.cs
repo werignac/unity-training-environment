@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using werignac.GeneticAlgorithm;
 
-namespace werignac.Crawling
+namespace werignac.GeneticAlgorithm
 {
 	public class StraightLineEvaluator : MonoBehaviour, IFitnessEvaluator
 	{

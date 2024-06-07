@@ -5,10 +5,10 @@ using UnityEngine;
 using UnityEngine.Events;
 using werignac.GeneticAlgorithm;
 using System.Text.Json;
+using werignac.Communication;
 
 namespace werignac.Crawling
 {
-
 	public struct DeserializedCrawlerData
 	{
 		public struct BodyPart
@@ -39,6 +39,7 @@ namespace werignac.Crawling
 
 		public BodyPart First { get; set; }
 		public BodyPart Second { get; set; }
+		public string PipeName { get; set; }
 
 		public static DeserializedCrawlerData Random()
 		{
@@ -70,8 +71,10 @@ namespace werignac.Crawling
 			}
 		}
 
-		public BodyPart First { get; set; }
-		public BodyPart Second { get; set; }
+		public BodyPart First { get; private set; }
+		public BodyPart Second { get; private set; }
+
+		public string PipeName { get; private set; }
 
 		public CrawlerInitializationData(int i) : base(i) { }
 
@@ -79,6 +82,7 @@ namespace werignac.Crawling
 		{
 			First = new BodyPart(deserializedData.First);
 			Second = new BodyPart(deserializedData.Second);
+			PipeName = deserializedData.PipeName;
 		}
 	}
 
@@ -95,30 +99,20 @@ namespace werignac.Crawling
 		private const string TERMINATOR = "END";
 		private int creatureCount = 0;
 
-		public async override IAsyncEnumerable<CrawlerInitializationData> ReadCreatures(StreamReader sr)
+		public override IEnumerable<CrawlerInitializationData> ReadCreatures(ICommunicator communicator)
 		{
 			IsDoneReading = false;
 			// TODO: Check when pipe has closed.
 
 			string line;
-			string incompleteJSONStr = "";
-			int bracketCount = 0;
 
-			while (!TERMINATOR.Equals(line = await sr.ReadLineAsync()))
+			while (communicator.Next(out line) && !TERMINATOR.Equals(line))
 			{
-				foreach (var tuple in ReadClosedJSONObjects(incompleteJSONStr, line, bracketCount))
+				foreach (string jsonStr in ReadClosedJSONObjects(line))
 				{
-					if (tuple.Item2)
-					{
-						DeserializedCrawlerData DeserializedData = JsonSerializer.Deserialize<DeserializedCrawlerData>(tuple.Item1);
-						CrawlerInitializationData Data = new CrawlerInitializationData(creatureCount++, DeserializedData);
-						yield return Data;
-					}
-					else
-					{
-						incompleteJSONStr = tuple.Item1;
-						bracketCount = tuple.Item3;
-					}
+					DeserializedCrawlerData DeserializedData = JsonSerializer.Deserialize<DeserializedCrawlerData>(jsonStr);
+					CrawlerInitializationData Data = new CrawlerInitializationData(creatureCount++, DeserializedData);
+					yield return Data;
 				}
 			}
 

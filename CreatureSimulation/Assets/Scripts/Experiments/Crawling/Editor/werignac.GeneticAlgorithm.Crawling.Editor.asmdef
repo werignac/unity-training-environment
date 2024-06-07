@@ -1,0 +1,19 @@
+{
+    "name": "werignac.GeneticAlgorithm.Crawling.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:fda32874056c8e544a14eb92032608c7",
+        "GUID:49ad47764adeb344eb988f000798565a"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

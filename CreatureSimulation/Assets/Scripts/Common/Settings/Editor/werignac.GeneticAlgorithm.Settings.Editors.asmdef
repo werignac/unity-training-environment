@@ -1,0 +1,18 @@
+{
+    "name": "werignac.GeneticAlgorithm.Settings.Editors",
+    "rootNamespace": "werignac.GeneticAlgorithm.Settings.Editors",
+    "references": [
+        "GUID:ddaa890fea0cfc649a71dda6cf19528b"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

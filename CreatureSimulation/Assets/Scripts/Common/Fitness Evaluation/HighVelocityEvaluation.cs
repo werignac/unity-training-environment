@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using werignac.GeneticAlgorithm;
 
-namespace werignac.FallingRectangularPrism
+namespace werignac.GeneticAlgorithm
 {
 	public class HighVelocityEvaluation : MonoBehaviour, IFitnessEvaluator
 	{

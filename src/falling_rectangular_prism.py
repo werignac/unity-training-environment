@@ -102,6 +102,10 @@ def execute_epoch(organisms, sim_inst: SimulationInstance):
             break
 
         line_split = line.split(" ")
+
+        if len(line_split) < 2:
+            continue
+
         index = int(line_split[0])
         score = float(line_split[1])
 
@@ -168,7 +172,7 @@ if __name__ == "__main__":
     exec_args = dict()
     exec_args["simulator_path"] = SIMULATOR_PATH
     exec_args["simulator_args"] = SIMULATOR_ARGS
-    sim_inst = SimulationInstance(os.path.join(PIPE_PATH, PIPE_NAME), exec_args)
+    sim_inst = SimulationInstance(os.path.join(PIPE_PATH, PIPE_NAME), exec_args if RUN_EXECUTABLE else None)
 
     for i in range(EPOCH_COUNT):
         print(f"\nEpoch {i + 1}")

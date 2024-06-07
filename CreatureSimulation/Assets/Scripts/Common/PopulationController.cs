@@ -3,6 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using werignac.Creatures;
+using System.Threading.Tasks;
+using System;
+using System.Threading;
+using werignac.Subsystem;
+using werignac.GeneticAlgorithm.Subsystems;
 
 
 namespace werignac.GeneticAlgorithm
@@ -15,7 +20,6 @@ namespace werignac.GeneticAlgorithm
 
 		/// <summary>
 		/// Next creatures that need to be simulated.
-		/// TODO: Change "Object" to be simulation data.
 		/// Consider having a generic Population\<T\> controller and select
 		/// T for single-creature simulation or multi-creature simulations.
 		/// </summary>
@@ -31,23 +35,14 @@ namespace werignac.GeneticAlgorithm
 		private List<string> sessionLayers = new List<string>();
 		private HashSet<string> _sessionLayers;
 
-		// Physics Simulation Parameters
-		/// <summary>
-		/// False: runs physics simulation as fast as possible.
-		/// True: runs physics simulation at the same speed as realtime.
-		/// </summary>
-		private bool realtime;
-		/// <summary>
-		/// Amount of time since the last physics step. Used when realtime is true.
-		/// </summary>
-		private float timeSinceLastUpdate;
-
 		#endregion Fields
 
 		#region Events
 		// --- Events ---
 		public UnityEvent onOutOfCreatures = new UnityEvent();
 		public UnityEvent<T_InitData, float> onCreatureFinishedSimulation = new UnityEvent<T_InitData, float>();
+		public UnityEvent<T_InitData> onCreatureStartedSimulation = new UnityEvent<T_InitData>();
+		public UnityEvent<Exception> onError = new UnityEvent<Exception>();
 		#endregion Events
 
 		// --- Debugging ---
@@ -55,9 +50,15 @@ namespace werignac.GeneticAlgorithm
 		[SerializeField, Tooltip("Whether to do certain Debug.Logs.")]
 		private bool debug;
 
-		public void Initialize(bool _realtime)
+		private void Awake()
 		{
-			realtime = _realtime;
+			// Physics settings set in experiment.
+			PhysicsUpdateSubsystem physicsSubsystem = SubsystemManagerComponent.Get().GetSubsystem<PhysicsUpdateSubsystem>();
+			physicsSubsystem.onPhysicsStep.AddListener(SimulateStep);
+		}
+
+		public void Initialize()
+		{
 			_sessionLayers = new HashSet<string>(sessionLayers);
 		}
 
@@ -75,60 +76,59 @@ namespace werignac.GeneticAlgorithm
 			}
 		}
 
-		private void Update()
-		{
-			// If we're not in the correct simulation mode, some settings are not set up.
-			if (Physics.simulationMode != SimulationMode.Script)
-			{
-				Debug.LogWarningFormat("Expected Physics.simulationMode to be {0}, but was {1}. Check player settings.", SimulationMode.Script, Physics.simulationMode);
-				return;
-			}
-
-			// Don't do anything if we have nothing to simulate.
-			if (simulations.Count == 0)
-				return;
-
-			// If running in realtime...
-			if (realtime)
-			{
-				// See how much time has passed since the last frame.
-				timeSinceLastUpdate += Time.deltaTime;
-				// If more time has passed than the length of a physics simulation step,
-				// advance the physics simulation.
-				for (int i = 0; i < Mathf.FloorToInt(timeSinceLastUpdate / Time.fixedDeltaTime); i++)
-				{
-					SimulateStep();
-				}
-				// Reset the timer if we simulated steps.
-				timeSinceLastUpdate = timeSinceLastUpdate % Time.fixedDeltaTime;
-			}
-			else
-			{ // If not running in realtime...
-				// Simulate as fast as possible.
-				SimulateStep();
-			}
-		}
-
 		/// <summary>
 		/// Simulates a physics step for all active simulation instances.
 		/// </summary>
-		private void SimulateStep()
+		private void SimulateStep(float deltaTime)
 		{
 			var toDestroys = new HashSet<SimulationSessionController<T_InitData>>();
-			
-			Physics.Simulate(Time.fixedDeltaTime);
-			foreach(SimulationSessionController<T_InitData> controller in simulations)
-			{
-				bool finished = controller.OnSimulateStep(out float score);
 
-				if (finished)
-				{
-					onCreatureFinishedSimulation.Invoke(controller.CreatureData, score);
-					toDestroys.Add(controller);
-				}
+			Physics.Simulate(Time.fixedDeltaTime);
+
+			SimulationSessionController<T_InitData>[] simulationsArray = new SimulationSessionController<T_InitData>[simulations.Count];
+			simulations.CopyTo(simulationsArray);
+
+			// Perform the synchronous step of simulation.
+			// e.g. Tell the creatures to do any work on this frame of the simulation.
+			for (int i = 0; i < simulations.Count; i++)
+			{
+				simulationsArray[i].SimulateStep();
 			}
 
-			foreach(SimulationSessionController<T_InitData> toDestroy in toDestroys)
+			// Perform the asynchronous step of simulaiton.
+			Task[] simulationTasks = new Task[simulationsArray.Length];
+
+			for (int i = 0; i < simulations.Count; i++)
+			{
+				simulationTasks[i] = simulationsArray[i].SimulateStepAsync();
+			}
+
+			try
+			{
+				// Wait for all creatures to finish their work.
+				bool success = Task.WaitAll(simulationTasks, 10000);
+
+				if (!success)
+					Debug.LogError("Async step timed out.");
+			}
+			catch (Exception e)
+			{
+				Debug.LogError(e);
+				onError.Invoke(e);
+			}
+
+			// Perform the post-asynchronous step of simulation
+			for (int i = 0; i < simulations.Count; i++)
+			{
+				var simulation = simulationsArray[i];
+				simulation.PostAsyncStep();
+				// If the simulation has run its course, mark it for deletion.
+				if (simulation.GetHasFinished())
+					toDestroys.Add(simulation);
+			}
+			
+			// Destroy the simulations that have completed.
+			foreach (SimulationSessionController<T_InitData> toDestroy in toDestroys)
 			{
 				simulations.Remove(toDestroy);
 				DestroyImmediate(toDestroy.gameObject);
@@ -145,13 +145,12 @@ namespace werignac.GeneticAlgorithm
 			if (debug)
 				Debug.LogFormat("Simulating Generation Creature: {0}", creature.Index);
 
-			// TODO: Use active simulations to find a physics layer for new simulation.
-
 			var _instance = Instantiate(simulationSessionPrefab);
 			SimulationSessionController<T_InitData> _simulationSessionController = _instance.GetComponent<SimulationSessionController<T_InitData>>();
 			_simulationSessionController.Initialize(creature, layer);
 
 			simulations.Add(_simulationSessionController);
+			onCreatureStartedSimulation.Invoke(creature);
 		}
 
 		/// <summary>
@@ -178,7 +177,7 @@ namespace werignac.GeneticAlgorithm
 			// The previous check confirms that there's a simulation layer avilable.
 			// Find and use it for the new simulation.
 			HashSet<string> unusedSessionLayers = new HashSet<string>(_sessionLayers);
-			foreach(SimulationSessionController<T_InitData> controller in simulations)
+			foreach (SimulationSessionController<T_InitData> controller in simulations)
 				unusedSessionLayers.Remove(controller.SimulationLayer);
 			string layer = null;
 			foreach (string _layer in unusedSessionLayers)

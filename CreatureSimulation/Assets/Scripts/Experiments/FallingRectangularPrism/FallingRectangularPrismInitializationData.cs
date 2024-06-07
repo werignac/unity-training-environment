@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.IO.Pipes;
 using System.IO;
 using UnityEngine;
-using werignac.GeneticAlgorithm;
 using System.Text.Json;
 using System;
 using UnityEngine.Events;
+using werignac.GeneticAlgorithm;
+using werignac.Communication;
 
 namespace werignac.FallingRectangularPrism
 {
@@ -56,30 +57,20 @@ namespace werignac.FallingRectangularPrism
 		/// </summary>
 		/// <param name="sr"></param>
 		/// <returns></returns>
-		public async override IAsyncEnumerable<FallingRectangularPrismData> ReadCreatures(StreamReader sr)
+		public override IEnumerable<FallingRectangularPrismData> ReadCreatures(ICommunicator communicator)
 		{
 			IsDoneReading = false;
 			// TODO: Check when pipe has closed.
 
 			string line;
-			string incompleteJSONStr = "";
-			int bracketCount = 0;
 
-			while (!TERMINATOR.Equals(line = await sr.ReadLineAsync()))
+			while (communicator.Next(out line) && !TERMINATOR.Equals(line))
 			{
-				foreach (var tuple in ReadClosedJSONObjects(incompleteJSONStr, line, bracketCount))
+				foreach (var jsonStr in ReadClosedJSONObjects(line))
 				{
-					if (tuple.Item2)
-					{
-						DeserializedFallingRectangularPrismData DeserializedData = JsonSerializer.Deserialize<DeserializedFallingRectangularPrismData>(tuple.Item1);
-						FallingRectangularPrismData Data = new FallingRectangularPrismData(creatureCount++, DeserializedData);
-						yield return Data;
-					}
-					else
-					{
-						incompleteJSONStr = tuple.Item1;
-						bracketCount = tuple.Item3;
-					}
+					DeserializedFallingRectangularPrismData DeserializedData = JsonSerializer.Deserialize<DeserializedFallingRectangularPrismData>(jsonStr);
+					FallingRectangularPrismData Data = new FallingRectangularPrismData(creatureCount++, DeserializedData);
+					yield return Data;
 				}
 			}
 

@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using werignac.Utils;
 using System;
+using werignac.Utils;
 
 namespace werignac.GeneticAlgorithm
 {
@@ -58,8 +58,8 @@ namespace werignac.GeneticAlgorithm
 		private void EvaluateVelocity(GameObject bodyPart)
 		{
 			ArticulationBody body = bodyPart.GetComponent<ArticulationBody>();
-			
-			if (! body)
+
+			if (!body)
 			{
 				// Uncommented for GFX bodies
 				//Debug.LogWarningFormat("Cannot evaluate velocity of body part with no ArticulationBody {0}.", bodyPart.name);

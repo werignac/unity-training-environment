@@ -1,11 +1,48 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using werignac.GeneticAlgorithm;
 
 namespace werignac.Crawling
 {
 	public class CrawlingBodyPartComponent : MonoBehaviour
 	{
+		// TODO: Create this SimulationFrame in a function and read it to the individual pipe.
+		public struct DeserializedSimulationFrame
+		{
+			public DeserializedVector Velocity { get; set; }
+			public DeserializedVector AngularVelocity { get; set; }
+			public DeserializedVector WorldPosition { get; set; }
+			// Note: not all 3 dimensions may be used.
+			public DeserializedVector ArticulationPosition { get; set; }
+			public List<DeserializedSimulationFrame> Children { get; set; }
+
+			public override string ToString()
+			{
+				string message = "";
+
+				message += $"Velocity: {Velocity.ToVector()}";
+				message += $"\nAngular Velocity: {AngularVelocity.ToVector()}";
+				message += $"\nWorld Postion: {WorldPosition.ToVector()}";
+				message += $"\nArticulation Position: {ArticulationPosition.ToVector()}";
+				return message;
+			}
+		}
+
+		public struct DeserializedCreatureStructure
+		{
+			public DeserializedVector WorldPosition { get; set; }
+			public DeserializedVector LocalPosition { get; set; }
+			public DeserializedVector ArticulationPosition { get; set; }
+			public DeserializedVector WorldRotation { get; set; }
+			public DeserializedVector LocalRotation { get; set; }
+			public DeserializedVector Size { get; set; }
+
+			public int DegreesOfFreedom { get; set; }
+
+			public List<DeserializedCreatureStructure> Children { get; set; }
+		}
+
 		[SerializeField]
 		private float density = 1;
 
@@ -14,10 +51,8 @@ namespace werignac.Crawling
 
 		private List<CrawlingBodyPartComponent> ChildrenBodyParts = new List<CrawlingBodyPartComponent>();
 
-#if UNITY_EDITOR
 		[SerializeField]
 		public CrawlerInitializationData.BodyPart InitData { get; set; }
-#endif
 
 		/// <summary>
 		/// Call before setting the parent.
@@ -67,6 +102,57 @@ namespace werignac.Crawling
 			{
 				childBodyPart.ActivateArticulationBodies();
 			}
+		}
+
+		public DeserializedSimulationFrame GetDeserializedSimulationFrame(
+#if UNITY_EDITOR
+		bool e_Children = true
+#endif
+		)
+		{
+			DeserializedSimulationFrame frame = new DeserializedSimulationFrame();
+			frame.Velocity = new DeserializedVector(ArticulationBody.velocity);
+			frame.AngularVelocity = new DeserializedVector(ArticulationBody.angularVelocity);
+			Vector3 articulationPos = new Vector3();
+			for (int i = 0; i < ArticulationBody.dofCount; i++)
+				articulationPos[i] = ArticulationBody.jointPosition[i];
+			frame.ArticulationPosition = new DeserializedVector(articulationPos);
+			frame.WorldPosition = new DeserializedVector(transform.position);
+
+#if UNITY_EDITOR
+			if (!e_Children)
+				return frame;
+#endif
+
+			frame.Children = new List<DeserializedSimulationFrame>();
+
+			foreach (CrawlingBodyPartComponent child in ChildrenBodyParts)
+			{
+				frame.Children.Add(child.GetDeserializedSimulationFrame());
+			}
+
+			return frame;
+		}
+
+		public DeserializedCreatureStructure GetDeserializedCreatureStructure()
+		{
+			DeserializedCreatureStructure structure = new DeserializedCreatureStructure();
+
+			structure.WorldPosition = new DeserializedVector(transform.position);
+			structure.LocalPosition = new DeserializedVector();
+			structure.WorldRotation = new DeserializedVector(transform.rotation.eulerAngles);
+			structure.LocalRotation = new DeserializedVector(transform.localRotation.eulerAngles);
+			structure.Size = new DeserializedVector(Box.size);
+
+			structure.DegreesOfFreedom = ArticulationBody.dofCount;
+
+			structure.Children = new List<DeserializedCreatureStructure>();
+			foreach (CrawlingBodyPartComponent child in ChildrenBodyParts)
+			{
+				structure.Children.Add(child.GetDeserializedCreatureStructure());
+			}
+
+			return structure;
 		}
 	}
 }

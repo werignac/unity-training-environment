@@ -11,5 +11,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/FallingRectangularPrism.unity
     guid: 8b89d7e41b1869d4f8fa7be6205fd3a9
+  - enabled: 1
+    path: Assets/Scenes/Crawl.unity
+    guid: 479f9ed0c1e97944eb79398983e2e368
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

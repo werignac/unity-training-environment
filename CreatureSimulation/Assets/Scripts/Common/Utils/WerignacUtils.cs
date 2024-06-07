@@ -23,10 +23,15 @@ namespace werignac.Utils
 		#endregion
 
 		#region TryGetComponentInAll
-		public static bool TryGetComponentInAll<T>(out T outComponent)
+		public static bool TryGetComponentInActiveScene<T>(out T outComponent)
+		{
+			return TryGetComponentInScene<T>(SceneManager.GetActiveScene(), out outComponent);
+		}
+
+		public static bool TryGetComponentInScene<T>(Scene scene, out T outComponent)
 		{
 			outComponent = default(T);
-			foreach (GameObject root in SceneManager.GetActiveScene().GetRootGameObjects())
+			foreach (GameObject root in scene.GetRootGameObjects())
 			{
 				outComponent = root.GetComponentInChildren<T>();
 				if (outComponent != null)
@@ -34,6 +39,7 @@ namespace werignac.Utils
 			}
 			return false;
 		}
+
 		#endregion
 
 		#region BroadcastToAll
@@ -87,7 +93,7 @@ namespace werignac.Utils
 		#endregion
 
 		#region ForEach Gameobject
-		
+
 		/// <summary>
 		/// Performs a breadth-first search on a game object and its children invoking the passed
 		/// function on each game object.
@@ -97,12 +103,12 @@ namespace werignac.Utils
 			Queue<GameObject> toVisit = new Queue<GameObject>();
 			toVisit.Enqueue(toIterateOver);
 
-			while(toVisit.Count > 0)
+			while (toVisit.Count > 0)
 			{
 				GameObject visit = toVisit.Dequeue();
 				onVisit(visit);
 
-				for(int i = 0; i < visit.transform.childCount; i++)
+				for (int i = 0; i < visit.transform.childCount; i++)
 				{
 					toVisit.Enqueue(visit.transform.GetChild(i).gameObject);
 				}
@@ -125,16 +131,16 @@ namespace werignac.Utils
 		public static Bounds GetCompositeAABB(this GameObject self, bool countZeroSizeBounds = false)
 		{
 			Bounds composite = new Bounds(self.transform.position, Vector3.zero);
-			
+
 			Collider collider = self.GetComponent<Collider>();
-			
+
 			if (collider != null)
 				composite = collider.bounds;
 
 			foreach (Transform childT in self.transform)
 			{
 				Bounds childAABB = childT.gameObject.GetCompositeAABB(countZeroSizeBounds);
-				
+
 				if ((!countZeroSizeBounds) && childAABB.size == Vector3.zero)
 					continue;
 
@@ -156,7 +162,7 @@ namespace werignac.Utils
 		#endregion
 
 		#region GetCompositeCenterOfMass
-		
+
 		public static Vector3 GetCompositeCenterOfMass(this ArticulationBody self)
 		{
 			return self.gameObject.GetCompositeCenterOfMass(out float _);
@@ -189,7 +195,7 @@ namespace werignac.Utils
 		#endregion
 
 		#region GetCompositeMass
-		
+
 		public static float GetCompositeMass(this ArticulationBody self)
 		{
 			return self.gameObject.GetCompositeMass();
@@ -208,7 +214,19 @@ namespace werignac.Utils
 
 			return mass;
 		}
-		
+
 		#endregion
+
+		#region GetSceneRoots
+		/// <summary>
+		/// Returns a list of the root gameobjects in the active scene.
+		/// </summary>
+		/// <returns>A list of the root gameobjects in the active scene.</returns>
+		public static GameObject[] GetActiveSceneRoots()
+		{
+			return SceneManager.GetActiveScene().GetRootGameObjects();
+		}
+
+		#endregion GetSceneRoots
 	}
 }

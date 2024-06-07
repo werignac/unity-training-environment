@@ -164,9 +164,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45f11196b73ad0a48bf564630e03d143, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _useUnitySynchronizationContext: 1
   pipeTimeout: 10
   useTestPipeName: 1
-  testPipeName: Pipe
+  testPipeName: PipeA
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

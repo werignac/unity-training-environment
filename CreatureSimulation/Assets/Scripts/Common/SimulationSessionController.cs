@@ -2,8 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using werignac.Utils;
 using werignac.Creatures;
+using werignac.Utils;
+using System.Threading.Tasks;
+using System;
 
 namespace werignac.GeneticAlgorithm
 {
@@ -39,6 +41,19 @@ namespace werignac.GeneticAlgorithm
 			private set;
 		}
 
+		#region Between-Call Data
+		/// <summary>
+		/// Components that are awaiting completion during async step.
+		/// Assigned in CollectAsyncComponents.
+		/// </summary>
+		private IAsyncSimulateStep[] ChildrenAsyncSimSteps;
+		/// <summary>
+		/// Tasks that will need to be completed on the async step.
+		/// Assigned in CollectAsyncComponents.
+		/// </summary>
+		private Task[] ChildrenAsyncSimTasks;
+		#endregion
+
 		public void Initialize(T_InitData _creatureData, string layer = null)
 		{
 			CreatureData = _creatureData;
@@ -71,23 +86,74 @@ namespace werignac.GeneticAlgorithm
 		/// Called by Population Controller.
 		/// </summary>
 		/// <returns>Whether the simulation should continue running.</returns>
-		public bool OnSimulateStep(out float score)
+		public void SimulateStep()
 		{
 			// If we've finished simulating, don't perform more simulation steps.
-			if (simulationProgress >= simulationDuration)
-			{
-				score = _fitness.GetScore();
-				return false;
-			}
+			if (GetHasFinished())
+				return;
 
 			// Tell children that a simulation step has occurred.
-			creatureObject.BroadcastMessage("OnSimulateStep", Time.fixedDeltaTime, SendMessageOptions.DontRequireReceiver);
+			gameObject.BroadcastMessage("OnSimulateStep", Time.fixedDeltaTime, SendMessageOptions.DontRequireReceiver);
 
-			score = _fitness.Evaluate(creatureObject);
+			// Collect the async components that will need to be invoked in the async simulation step.
+			CollectAsyncComponents();
+		}
 
+		/// <summary>
+		/// Call before SimulateSetAsync. Gets the components who need to have async calls.
+		/// </summary>
+		private void CollectAsyncComponents()
+		{
+			ChildrenAsyncSimSteps = GetComponentsInChildren<IAsyncSimulateStep>();
+			ChildrenAsyncSimTasks = new Task[ChildrenAsyncSimSteps.Length];
+			for (int i = 0; i < ChildrenAsyncSimSteps.Length; i++)
+			{
+				ChildrenAsyncSimTasks[i] = ChildrenAsyncSimSteps[i].OnSimulateStepAsync(Time.fixedDeltaTime);
+			}
+		}
+
+		/// <summary>
+		/// Performs all pending async tasks.
+		/// </summary>
+		/// <returns></returns>
+		public async Task SimulateStepAsync()
+		{
+			if (!GetHasFinished() && ChildrenAsyncSimTasks != null)
+			{
+				// Wait for all children to perform their async tasks.
+				await Task.WhenAll(ChildrenAsyncSimTasks);
+			}
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		public void PostAsyncStep()
+		{
+			// If the simulaiton has finished, don't do anything.
+			if (GetHasFinished())
+				return;
+
+			// Clear async lists for next step.
+			ChildrenAsyncSimSteps = null;
+			ChildrenAsyncSimTasks = null;
+
+			// Tell children that a simulation step has occurred.
+			gameObject.BroadcastMessage("OnPostSimulateStepAsync", Time.fixedDeltaTime, SendMessageOptions.DontRequireReceiver);
+
+			// Update the amount of time spent on this simulation.
 			simulationProgress += Time.fixedDeltaTime;
+			// Evaluate the creature's score.
+			_fitness.Evaluate(creatureObject);
+		}
 
-			// Check session completion
+		public float GetScore()
+		{
+			return _fitness.GetScore();
+		}
+
+		public bool GetHasFinished()
+		{
 			return simulationProgress >= simulationDuration;
 		}
 	}

@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace werignac.GeneticAlgorithm
+namespace werignac.GeneticAlgorithm.Settings.Editors
 {
 	// Register a SettingsProvider using IMGUI for the drawing framework:
 	static class MyCustomSettingsIMGUIRegister

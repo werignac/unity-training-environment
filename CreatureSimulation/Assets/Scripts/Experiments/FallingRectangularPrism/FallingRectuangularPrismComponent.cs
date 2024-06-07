@@ -45,11 +45,11 @@ namespace werignac.FallingRectangularPrism
 		{
 			float heightOfLowestPoint = float.PositiveInfinity;
 
-			foreach (float x in new float[]{ -0.5f, 0.5f})
+			foreach (float x in new float[] { -0.5f, 0.5f })
 			{
-				foreach (float y in new float[] { -0.5f, 0.5f})
+				foreach (float y in new float[] { -0.5f, 0.5f })
 				{
-					foreach(float z in new float[] { -0.5f, 0.5f})
+					foreach (float z in new float[] { -0.5f, 0.5f })
 					{
 						Vector3 point = transform.TransformPoint(x, y, z);
 						if (point.y < heightOfLowestPoint)

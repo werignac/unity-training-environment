@@ -359,8 +359,11 @@ MonoBehaviour:
   OnExpirementTerminated:
     m_PersistentCalls:
       m_Calls: []
-  overrideRealtime: 0
-  readCreatureOnStart: 1
+  OnCreatureStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  overrideRealtime: 1
+  readCreatureOnStart: 0
   breakAfterReadCreatures: 0
 --- !u!114 &1901938780
 MonoBehaviour:
@@ -396,6 +399,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   onCreatureFinishedSimulation:
+    m_PersistentCalls:
+      m_Calls: []
+  onCreatureStartedSimulation:
     m_PersistentCalls:
       m_Calls: []
   debug: 0

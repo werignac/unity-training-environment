@@ -6,7 +6,7 @@ using UnityEditor;
 #endif
 using AYellowpaper.SerializedCollections;
 
-namespace werignac.GeneticAlgorithm
+namespace werignac.GeneticAlgorithm.Settings
 {
 	public class SimulationSettings : ScriptableObject
 	{

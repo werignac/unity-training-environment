@@ -5,8 +5,7 @@ using System.IO.Pipes;
 using System.IO;
 using UnityEngine.Events;
 using System;
-
-
+using werignac.Communication;
 
 namespace werignac.GeneticAlgorithm
 {
@@ -75,7 +74,17 @@ namespace werignac.GeneticAlgorithm
 		protected bool IsDoneReading = false;
 		protected UnityEvent onIsDoneReading = new UnityEvent();
 
-		public abstract IAsyncEnumerable<T> ReadCreatures(StreamReader sr);
+		/// <summary>
+		/// The incomplete string of a JSON object waiting to be completed.
+		/// </summary>
+		private string past = "";
+
+		/// <summary>
+		/// The number of { brackets that need to be closed.
+		/// </summary>
+		private int bracketCount = 0;
+
+		public abstract IEnumerable<T> ReadCreatures(ICommunicator communicator);
 
 		/// <summary>
 		/// Reads a line and returns tuples representing a complete JSON object.
@@ -84,10 +93,12 @@ namespace werignac.GeneticAlgorithm
 		/// <param name="newline"></param>
 		/// <param name="bracketCount"></param>
 		/// <returns>String: JSON string, Bool: Whether the JSON string is complete, int: the number of { brackets that need to be closed.</returns>
-		protected IEnumerable<Tuple<string, bool, int>> ReadClosedJSONObjects(string past, string newline, int bracketCount)
+		protected IEnumerable<string> ReadClosedJSONObjects(string newline)
 		{
+			// Accumulation of a JSON object string.
 			string JSONStr = past;
 
+			// The index to start looking for {} bracksts (in newline).
 			int index = -1;
 			int nextAppendStart = 0;
 
@@ -112,14 +123,18 @@ namespace werignac.GeneticAlgorithm
 
 					if (bracketCount < 0)
 						throw new Exception($"JSON string started with closed bracket \n{JSONStr}");
+					// If bracketCount is zero, we completed a JSON object.
 					if (bracketCount == 0)
 					{
+						// Add the end of the JSON object.
 						JSONStr += newline.Substring(nextAppendStart, index - nextAppendStart + 1);
 						JSONStr.Trim();
-						yield return new Tuple<string, bool, int>(JSONStr, true, bracketCount);
+						yield return JSONStr;
+						// Start looking for the next JSON object.
 						JSONStr = "";
 						nextAppendStart = index + 1;
 						bracketCount = 0;
+						past = "";
 					}
 				}
 			} while (index >= 0);
@@ -127,7 +142,7 @@ namespace werignac.GeneticAlgorithm
 			// Add the remaining contents to the JSONStr. Don't forget to trim.
 			JSONStr += newline.Substring(nextAppendStart);
 			JSONStr.Trim();
-			yield return new Tuple<string, bool, int>(JSONStr, false, bracketCount);
+			past = JSONStr;
 		}
 
 		public UnityEvent GetOnIsDoneReading() { return onIsDoneReading; }

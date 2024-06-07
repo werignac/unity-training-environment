@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 using werignac.Utils;
 
-namespace werignac.Crawling
+namespace werignac.Crawling.Editors
 {
 	[CustomEditor(typeof(CrawlerComponent))]
 	[CanEditMultipleObjects]
