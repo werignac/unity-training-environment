@@ -6,29 +6,29 @@ using System.Reflection;
 namespace werignac.Communication
 {
 	/// <summary>
-	/// An object that when passed a line tries parsing it via a queue of parsers.
+	/// An object that when passed a line tries parsing it via a stack of parsers.
 	/// Stops parsing at the first sucessful parser per line.
 	/// 
 	/// Thread-safe.
 	/// </summary>
-    public class ParserQueue : IParserQueueEntry
+    public class ParserStack : IParserStackEntry
     {
 		// TODO: Handle Overflow. Write Error and Warning Parsers. Connect to Communicator in Dispatcher.
 
 		/// <summary>
-		/// List of parsers in the ParserQueue.
-		/// When a line is sent to the communicator, the parser queue extracts the line
+		/// List of parsers in the ParserStack.
+		/// When a line is sent to the communicator, the parser stack extracts the line
 		/// and tries to have each parser parse it starting with the first parser.
 		/// Once it reaches a parser that successfully parses the line, it stops iterating
 		/// through the list.
 		/// </summary>
-		private List<IParserQueueEntry> _parsers = new List<IParserQueueEntry>();
+		private List<IParserStackEntry> _parsers = new List<IParserStackEntry>();
 
 		/// <summary>
-		/// Adds the passed parser to the end of the parsers queue.
+		/// Adds the passed parser to the end of the parsers stack.
 		/// </summary>
 		/// <param name="toAdd"></param>
-		public void AddParser(IParserQueueEntry toAdd)
+		public void AddParser(IParserStackEntry toAdd)
 		{
 			lock (_parsers)
 			{
@@ -37,10 +37,10 @@ namespace werignac.Communication
 		}
 
 		/// <summary>
-		/// Adds a new parser of the provided type to the end of the parsers queue.
+		/// Adds a new parser of the provided type to the end of the parsers stack.
 		/// </summary>
-		/// <typeparam name="ParserType">The type of parser to add to the end of the parsers queue.</typeparam>
-		public ParserType AddParser<ParserType>() where ParserType : IParserQueueEntry, new()
+		/// <typeparam name="ParserType">The type of parser to add to the end of the parsers stack.</typeparam>
+		public ParserType AddParser<ParserType>() where ParserType : IParserStackEntry, new()
 		{
 			ParserType newParser = new ParserType();
 			lock (_parsers)
@@ -52,41 +52,41 @@ namespace werignac.Communication
 
 
 		/// <summary>
-		/// Pops the passed parser from the bottom of the parser queue.
-		/// Throws an error if the parser to pop does not match the parser at the bottom
-		/// of the queue.
+		/// Pops the passed parser from the top of the parser stack.
+		/// Throws an error if the parser to pop does not match the parser at the top
+		/// of the stack.
 		/// </summary>
 		/// <param name="toPop">The parser to pop.</param>
-		public void PopParser(IParserQueueEntry toPop)
+		public void PopParser(IParserStackEntry toPop)
 		{
 			lock (_parsers)
 			{
 				int lastIndex = _parsers.Count - 1;
-				IParserQueueEntry lastParser = _parsers[lastIndex];
+				IParserStackEntry lastParser = _parsers[lastIndex];
 
 				if (lastParser != toPop)
-					throw new System.Exception($"Tried to pop parser from parser queue, but did not match.\nParser at end of queue: {lastParser}\nPassed parser: {toPop}");
+					throw new System.Exception($"Tried to pop parser from parser stack, but did not match.\nParser at end of stack: {lastParser}\nPassed parser: {toPop}");
 
 				_parsers.RemoveAt(lastIndex);
 			}
 		}
 
 		/// <summary>
-		/// Pops the parser from the bottom of the parser queue if it is
-		/// of the passed parser type. Throws an error if the parser at the bottom of the queue
+		/// Pops the parser from the top of the parser stack if it is
+		/// of the passed parser type. Throws an error if the parser at the top of the stack
 		/// is not of the supplied type.
 		/// </summary>
 		/// <typeparam name="ParserType">Parser type to pop.</typeparam>
 		/// <returns>The popped parser.</returns>
-		public ParserType PopParser<ParserType>() where ParserType : IParserQueueEntry
+		public ParserType PopParser<ParserType>() where ParserType : IParserStackEntry
 		{
 			lock (_parsers)
 			{
 				int lastIndex = _parsers.Count - 1;
-				IParserQueueEntry lastParser = _parsers[lastIndex];
+				IParserStackEntry lastParser = _parsers[lastIndex];
 
 				if (!(lastParser is ParserType))
-					throw new System.Exception($"Tried to pop parser from parser queue, but type did not match.\nParser at end of queue: {lastParser}\nPassed parser type: {typeof(ParserType)}");
+					throw new System.Exception($"Tried to pop parser from parser stack, but type did not match.\nParser at end of stack: {lastParser}\nPassed parser type: {typeof(ParserType)}");
 
 				_parsers.RemoveAt(lastIndex);
 				return (ParserType)lastParser;
@@ -94,7 +94,7 @@ namespace werignac.Communication
 		}
 
 		/// <summary>
-		/// Tries to parse a line via the parsers in the parserqueue.
+		/// Tries to parse a line via the parsers in the parser stack.
 		/// </summary>
 		/// <param name="lineToParse">The line to parse</param>
 		/// <param name="cumulativeErrorMessage">The error message describing how all the parsers failed on failure.</param>
@@ -108,7 +108,7 @@ namespace werignac.Communication
 			{
 				parserCount = _parsers.Count;
 
-				foreach (IParserQueueEntry parser in _parsers)
+				foreach (IParserStackEntry parser in _parsers)
 				{
 					if (parser.TryParse(lineToParse, out string errorMessage))
 					{

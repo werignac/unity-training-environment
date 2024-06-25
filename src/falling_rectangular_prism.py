@@ -9,7 +9,7 @@ import os
 from simulation_instance import SimulationInstance
 
 PIPE_PATH = '\\\\.\\pipe\\'
-PIPE_NAME = "FallingRectangularPrismPipe"
+PIPE_NAME = "PipeA"
 SIMULATOR_PATH = "../CreatureSimulation/Builds/03-07-2024_00-51/CreatureSimulation.exe"
 SIMULATOR_ARGS = ["-batchmode", "-nographics", "-p", PIPE_NAME]
 

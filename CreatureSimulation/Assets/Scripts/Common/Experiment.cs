@@ -11,6 +11,7 @@ using System.Threading;
 using werignac.Subsystem;
 using werignac.GeneticAlgorithm.Subsystems;
 using werignac.Communication;
+using werignac.GeneticAlgorithm.Dispatch;
 
 namespace werignac.GeneticAlgorithm
 {
@@ -19,18 +20,53 @@ namespace werignac.GeneticAlgorithm
 	/// </summary>
 	public interface IExperiment
 	{
-		public void StartReadCreatures(ICommunicator communicator);
+		public void StartReadCreatures();
 		public UnityEvent<SimulationInitializationData, float, string> GetOnCreatureScoredEvent();
 		public UnityEvent GetOnExperimentTerminatedEvent();
 		public UnityEvent<SimulationInitializationData> GetOnCreatureStartedEvent();
 	}
 
-	public class Experiment<Init_Type, Random_Init_Type, Deserializer_Type> : MonoBehaviour, IExperiment where Init_Type : SimulationInitializationData where Random_Init_Type : RandomSimulationInitializationDataFactory<Init_Type>, new() where Deserializer_Type : CreatureReader<Init_Type>, new()
+	/// <summary>
+	/// TODO: Get rid of CreatureReader.
+	/// </summary>
+	/// <typeparam name="Init_Type">The type of the serialized objects read to initialize creatures.</typeparam>
+	/// <typeparam name="Random_Init_Type">An type that generates random creatures.</typeparam>
+	public abstract class Experiment<Init_Type, Random_Init_Type, Serializable_Init_Type> : MonoBehaviour, IExperiment where Init_Type : SimulationInitializationData where Random_Init_Type : RandomSimulationInitializationDataFactory<Init_Type>, new() where Serializable_Init_Type : new()
 	{
+		#region Parsing
+
+		Dispatcher dispatcher = null;
+
 		/// <summary>
-		/// The communicator to read lines from.
+		/// The stack of parsers that all objects share.
+		/// TODO: replace with reference to Dispatcher as subsystem.
 		/// </summary>
-		private ICommunicator communicator = null;
+		ParserStack parserStack = null; // TODO: listen for IsFinishedReadingCreatures / OnFinishedReadingCreatures before adding a new parser to multiplex to creatures.
+
+		/// <summary>
+		/// The parser that is used whilst the experiment is 
+		/// accepting new creatures.
+		/// 
+		/// null if the experiment is not accepting new creatures.
+		/// </summary>
+		private JsonParser<Serializable_Init_Type> jsonParser = null;
+
+		/// <summary>
+		/// Gets whether the JsonParser has finished reading creatures.
+		/// If generating from a random list, this always returns true.
+		/// 
+		/// Used by children to see if they need to wait before pushing a new
+		/// parser to the parser stack.
+		/// </summary>
+		public bool IsFinishedReadingCreatures { get { return jsonParser == null; } }
+
+		/// <summary>
+		/// The number of creatures read for this experiment. Resets
+		/// when an experiment is re-run. Used to create the index of a creature.
+		/// </summary>
+		private int numberOfCreaturesRead = 0;
+
+		#endregion Parsing
 
 		[SerializeField]
 		private PopulationController<Init_Type> populationController;
@@ -39,9 +75,8 @@ namespace werignac.GeneticAlgorithm
 		[SerializeField, Tooltip("The number of creatures to simulate if there is no pipe."), Min(0)]
 		private int noPipePopulationSize;
 		private Random_Init_Type randomDataFactory = new Random_Init_Type();
-		private Deserializer_Type deserializer;
 
-		bool hasInitialized = false;
+		private bool hasInitialized = false;
 
 		[Header("Events")]
 		[Tooltip("Called when a creature has finished being scored. Used to print results.")]
@@ -51,6 +86,10 @@ namespace werignac.GeneticAlgorithm
 		/// All this does is convert the T type to the SimulationInitializationData type for Dispatcher.
 		/// </summary>
 		public UnityEvent<SimulationInitializationData> OnCreatureStarted = new UnityEvent<SimulationInitializationData>();
+		/// <summary>
+		/// Invoked when the JsonParser has detected it reached the end of the list of objects to parse.
+		/// </summary>
+		public UnityEvent OnFinishedReadingCreatures = new UnityEvent();
 
 		[Header("Debugging")]
 		[SerializeField, Tooltip("If true, always sets realtime to false.")]
@@ -70,26 +109,30 @@ namespace werignac.GeneticAlgorithm
 		private void Start()
 		{
 			if (readCreatureOnStart)
-				StartReadCreatures(null);
+				StartReadCreatures();
 		}
 #endif
 
+		/// <summary>
+		/// Listen to events, read command line arguments, set whether the physics should
+		/// be realtime, etc.
+		/// </summary>
 		private void Initialize()
 		{
-			bool isBatchMode = Application.isBatchMode;
 			string[] commandLineArgs = Environment.GetCommandLineArgs();
 
 			Debug.LogFormat("Command Line Args: [{0}]", string.Join(", ", commandLineArgs));
 
+			// Listen to events.
 			populationController.onCreatureFinishedSimulation.AddListener(OnCreatureFinishedSimulation);
 			populationController.onOutOfCreatures.AddListener(CheckOutOfAllCreatures);
 			populationController.onCreatureStartedSimulation.AddListener(OnCreatureStartedListener);
-			// Initialize with passed or default parameters.
-			// TODO: use subsystems to set update rate.
-			PhysicsUpdateSubsystem physicsSubsystem = SubsystemManagerComponent.Get().GetSubsystem<PhysicsUpdateSubsystem>();
 			
+			// Set the physics step rate to be either realtime, or as fast as possible.
+			bool isBatchMode = Application.isBatchMode;
 			bool realtime = !(isBatchMode || overrideRealtime);
 
+			PhysicsUpdateSubsystem physicsSubsystem = SubsystemManagerComponent.Get().GetSubsystem<PhysicsUpdateSubsystem>();
 			if (realtime)
 			{
 				physicsSubsystem.SetFixedDeltaTime();
@@ -99,11 +142,19 @@ namespace werignac.GeneticAlgorithm
 				physicsSubsystem.SetBatchFixedDeltaTime();
 			}
 
+			// Set up the population controller.
 			populationController.Initialize();
 			populationController.onError.AddListener(OnPopulationControlError);
 
+			PostInitialize();
+
 			hasInitialized = true;
 		}
+
+		/// <summary>
+		/// A method for experiments to add their own initialization logic.
+		/// </summary>
+		protected virtual void PostInitialize() { }
 
 		
 		/// <summary>
@@ -114,17 +165,20 @@ namespace werignac.GeneticAlgorithm
 		/// Reading is performed in Update in this case.
 		/// </summary>
 		/// <param name="communicator"></param>
-		public void StartReadCreatures(ICommunicator communicator)
+		public void StartReadCreatures()
 		{
+			dispatcher = SubsystemManagerComponent.Get().GetSubsystem<Dispatcher>();
+
 			if (!hasInitialized)
 				Initialize();
 
-			deserializer = new Deserializer_Type();
-
-			if (communicator != null)
+			if (dispatcher != null)
 			{
+				// The index of the first creature is zero.
+				numberOfCreaturesRead = 0;
 				Debug.Log("Reading creatures from pipe.");
-				this.communicator = communicator;
+				parserStack = dispatcher.ParserStack;
+				jsonParser = parserStack.AddParser<JsonParser<Serializable_Init_Type>>();
 			}
 			else
 			{
@@ -133,6 +187,8 @@ namespace werignac.GeneticAlgorithm
 				{
 					populationController.EnqueueCreature(randomDataFactory.GenerateRandomData(i));
 				}
+
+				numberOfCreaturesRead = noPipePopulationSize;
 			}
 
 
@@ -145,15 +201,36 @@ namespace werignac.GeneticAlgorithm
 		}
 
 		/// <summary>
-		/// Every frame, check whether there are more creatures to read from a communicator.
+		/// Convert the json-serializable object into a useful object
+		/// with useful types (e.g. x y z -> unity Vector).
 		/// </summary>
+		/// <param name="serializedInit"></param>
+		/// <returns></returns>
+		protected abstract Init_Type SerializedToInitData(int index, Serializable_Init_Type serializedInit);
+
+		private void OnParsedJsonCreature(JsonCommand<Serializable_Init_Type> toEnqueue)
+		{
+			foreach (Serializable_Init_Type serializableCreatureData in toEnqueue.DeserializedObjects)
+				populationController.EnqueueCreature(SerializedToInitData(numberOfCreaturesRead++, serializableCreatureData));
+
+			// When we've reached the end of the list of objects,
+			// remove the all-consuming json parser.
+			if (toEnqueue.IsEnd)
+			{
+				parserStack.PopParser(jsonParser);
+				parserStack = null;
+				jsonParser = null;
+				OnFinishedReadingCreatures.Invoke();
+			}
+		}
+
 		private void Update()
 		{
-			if (communicator == null || deserializer.GetIsDoneReading())
-				return;
-
-			foreach (Init_Type creatureData in deserializer.ReadCreatures(communicator))
-				populationController.EnqueueCreature(creatureData);
+			if (jsonParser != null && jsonParser.Next(out JsonCommand<Serializable_Init_Type> command))
+			{
+				OnParsedJsonCreature(command);
+				dispatcher.CommunicatorBuffer.AcceptNext();
+			}
 		}
 
 		/// <summary>
@@ -175,11 +252,9 @@ namespace werignac.GeneticAlgorithm
 		/// </summary>
 		private void CheckOutOfAllCreatures()
 		{
-			if (!(deserializer.GetIsDoneReading() && populationController.IsOutOfCreatures()))
+			if (!(jsonParser == null && populationController.IsOutOfCreatures()))
 				return;
 
-			// Forfeit read control of the communicator once there are no more creatures to simulate.
-			communicator = null;
 			OnExpirementTerminated.Invoke();
 		}
 
@@ -198,7 +273,8 @@ namespace werignac.GeneticAlgorithm
 		/// <param name="e">The error gotten.</param>
 		private void OnPopulationControlError(Exception e)
 		{
-			communicator?.WriteError(e.ToString().Replace("\r\n", "\n"));
+			// TODO: Write an error using a reference to the dispatcher subsystem.
+			//communicator?.WriteError(e.ToString().Replace("\r\n", "\n"));
 		}
 
 		// Getters for different Unity events that the dispatcher listens to.

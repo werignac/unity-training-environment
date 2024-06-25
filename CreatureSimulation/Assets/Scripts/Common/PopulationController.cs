@@ -124,7 +124,10 @@ namespace werignac.GeneticAlgorithm
 				simulation.PostAsyncStep();
 				// If the simulation has run its course, mark it for deletion.
 				if (simulation.GetHasFinished())
+				{
+					onCreatureFinishedSimulation.Invoke(simulation.CreatureData, simulation.GetScore());
 					toDestroys.Add(simulation);
+				}
 			}
 			
 			// Destroy the simulations that have completed.

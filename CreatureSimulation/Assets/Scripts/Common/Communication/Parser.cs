@@ -1,7 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Threading;
 using UnityEngine;
+using UnityEngine.Events;
+using System;
 
 namespace werignac.Communication
 {
@@ -10,9 +13,21 @@ namespace werignac.Communication
 		/// <summary>
 		/// A queue of commands that have been parsed and need to be processed.
 		/// </summary>
-		Queue<CommandType> _parsedCommands = new Queue<CommandType>();
+		private volatile Queue<CommandType> _parsedCommands = new Queue<CommandType>();
 
-		// TODO: Add System event that is fired when a new command  is added to the parsedCommands queue.
+		/// <summary>
+		/// Add System event that is fired when a new command is added to the parsedCommands queue.
+		/// Starts unfired.
+		/// TODO: Cleanup parsedCommandEvent.
+		/// </summary>
+		private AutoResetEvent parsedCommandEvent = new AutoResetEvent(false);
+
+		/// <summary>
+		/// Callback for when a command is parsed.
+		/// 
+		/// Cannot invoke Unity functions.
+		/// </summary>
+		private Action<CommandType> onParsedCallback = null;
 
 		/// <summary>
 		/// Function implemented by specific types of parsers. Takes a string
@@ -63,8 +78,8 @@ namespace werignac.Communication
 					return _parsedCommands.Dequeue();
 			}
 
-			// TODO: Wait for signal that a command has been parsed.
-			throw new System.NotImplementedException();
+			// Wait for signal that a command has been parsed.
+			await Task.Run(()=> { parsedCommandEvent.WaitOne(); });
 
 			// Return the new parsed command that just came in.
 			lock (_parsedCommands)
@@ -91,11 +106,20 @@ namespace werignac.Communication
 				lock(_parsedCommands)
 				{
 					_parsedCommands.Enqueue(command);
-					// TODO: Signal that a command has been parsed.
 				}
+
+				//Signal that a command has been parsed.
+				parsedCommandEvent.Set();
+				if (onParsedCallback != null)
+					onParsedCallback(command);
 			}
 
 			return wasParsed;
+		}
+
+		public void SetOnParsedCallback(Action<CommandType> callback)
+		{
+			onParsedCallback = callback;
 		}
 	}
 }

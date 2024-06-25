@@ -2,10 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading.Tasks;
+using UnityEngine.Events;
+using System;
 
 namespace werignac.Communication
 {
-	public interface IParserQueueEntry
+	public interface IParserStackEntry
 	{
 		/// <summary>
 		/// Tries to parse the provided line. If successfully parsed,
@@ -17,7 +19,7 @@ namespace werignac.Communication
 		bool TryParse(string lineToParse, out string errorMessage);
 	}
 
-    public interface IParser<CommandType> : IParserQueueEntry
+    public interface IParser<CommandType> : IParserStackEntry
     {
 		/// <summary>
 		/// Gets the next command to process from a communicator.
@@ -30,5 +32,12 @@ namespace werignac.Communication
 		/// Async function that finishes once a new command has come in.
 		/// </summary>
 		Task<CommandType> GetCommandAsync();
+
+		/// <summary>
+		/// Set a callback for after a command is parsed.
+		/// Is independent from Next() queue.
+		/// </summary>
+		/// <param name="callback">Callback. Cannot execute Unity functions.</param>
+		void SetOnParsedCallback(Action<CommandType> callback);
     }
 }

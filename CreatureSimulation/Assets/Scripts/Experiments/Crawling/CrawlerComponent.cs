@@ -7,10 +7,14 @@ using werignac.Utils;
 using System.Text.Json;
 using System.Threading.Tasks;
 using werignac.GeneticAlgorithm;
-
+using werignac.Communication;
+using werignac.Subsystem;
+using werignac.GeneticAlgorithm.Dispatch;
 
 namespace werignac.Crawling
 {
+	public class CrawlerMoveInstruction { }
+
 	/// <summary>
 	/// Component for a single crawling creature with two parts.
 	/// 
@@ -18,6 +22,12 @@ namespace werignac.Crawling
 	/// </summary>
 	public class CrawlerComponent : MonoBehaviour, IAsyncSimulateStep
 	{
+		#region Communication
+		private Dispatcher dispatcher;
+		private CrawlingExperiment experiment;
+		JsonParser<CrawlerMoveInstruction> jsonParser;
+		#endregion Communication
+
 		[SerializeField]
 		private GameObject bodyPartPrefab;
 
@@ -28,26 +38,11 @@ namespace werignac.Crawling
 		[SerializeField]
 		private CrawlerInitializationData initData;
 
-		#region Pipe
-		private NamedPipeClientStream pipe = null;
-		private StreamWriter sw = null;
-		private StreamReader sr = null;
-
-		/// <summary>
-		/// Used to tell when the connection task for the pipe has completed.
-		/// </summary>
-		private Task connectTask = null;
-		/// <summary>
-		/// Lines that are queued for writing before pipe connects.
-		/// </summary>
-		private Queue<string> LineQueue = new Queue<string>();
-		#endregion
-
 		#region Between-Call Data
 		/// <summary>
 		/// Instruction sent through pipe of how to move the segments of this creature.
 		/// </summary>
-		private string moveInstruction;
+		private CrawlerMoveInstruction moveInstruction;
 
 		/// <summary>
 		/// deserialized simulation frame to write in incoming async process.
@@ -57,19 +52,23 @@ namespace werignac.Crawling
 
 		public void Initialize(CrawlerInitializationData initData)
 		{
+			dispatcher = SubsystemManagerComponent.Get().GetSubsystem<Dispatcher>();
+			// TODO: Be passed communication objects instead of having to fetch them.
+			//  would help with build integration.
+			if (!WerignacUtils.TryGetComponentInActiveScene(out experiment))
+				throw new System.Exception("Could not find experiment for crawler component");
+			jsonParser = experiment.Multiplexer.GetParserFromIndex(initData.Index);
+
 			// Initialize the body parts of this crawler.
 			InitializeBodies(initData);
-
-			// Connect to a pipe or set pipe to null.
-			InitializePipe(initData);
-
-			// Notify the client about the creature's structure.
-			WriteLine(JsonSerializer.Serialize(firstCrawler.GetDeserializedCreatureStructure())).Wait();
 
 			// Set initData references for editor visuals.
 			this.initData = initData;
 			firstCrawler.InitData = initData.First;
 			secondCrawler.InitData = initData.Second;
+
+			// Notify the client about the creature's structure.
+			WriteLine(JsonSerializer.Serialize(firstCrawler.GetDeserializedCreatureStructure()));
 		}
 
 		public void InitializeBodies(CrawlerInitializationData initData)
@@ -111,64 +110,10 @@ namespace werignac.Crawling
 			firstCrawler.ActivateArticulationBodies();
 		}
 
-		public void InitializePipe(CrawlerInitializationData initData)
+		public void WriteLine(string line)
 		{
-			if (initData.PipeName == null || (initData.PipeName.Length == 0))
-				return;
-
-			pipe = new NamedPipeClientStream(".", initData.PipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
-
-			// TODO: Always use timeout
-#if UNITY_EDITOR
-			connectTask = pipe.ConnectAsync(10 * 1000);
-#else
-			connectTask = pipe.ConnectAsync(10 * 1000);
-#endif
-			sw = new StreamWriter(pipe);
-			sr = new StreamReader(pipe);
-		}
-
-		/// <summary>
-		/// Flushes the queue for lines that need to be written prior to connection.
-		/// Should only be called once after connect.
-		/// </summary>
-		private async Task FlushLineQueue()
-		{
-			// TODO: Remove
-#if UNITY_EDITOR
-			Debug.LogFormat("Pipe connection for creature {0} complete", initData.Index);
-#endif
-			// Can only be set after connection.
-			while (LineQueue.TryDequeue(out string line))
-			{
-				await AwaitTimeout(sw?.WriteLineAsync(line), 2000, "write from the line queue");
-			}
-			await AwaitTimeout(sw?.FlushAsync(), 2000, "flushing from the line queue");
-
-			connectTask = null;
-			LineQueue.Clear();
-		}
-
-		public async Task WriteLine(string line)
-		{
-			if (pipe == null)
-				return;
-
-			// If we have not connected, add to the queue.
-			if (connectTask != null && !connectTask.IsCompleted)
-			{
-				LineQueue.Enqueue(line);
-			}
-			else
-			{
-				// If this is the first write post-connecting, flush any queued lines pre-connecting.
-				if (connectTask != null)
-					await FlushLineQueue();
-
-				await AwaitTimeout(sw?.WriteLineAsync(line), 2000, "write a line");
-				// Always flush as we need an immediate response from the brain.
-				await AwaitTimeout(sw?.FlushAsync(), 3000, "flush line");
-			}
+			string line_with_multiplex_prefix = $"{initData.Index} {line}";
+			dispatcher?.Communicator?.Write(line_with_multiplex_prefix);
 		}
 
 		public void OnSimulateStep(float deltaTime)
@@ -176,59 +121,39 @@ namespace werignac.Crawling
 			deserializedSimulationFrame = firstCrawler.GetDeserializedSimulationFrame();
 		}
 
-		// TODO: Make async.
 		public async Task OnSimulateStepAsync(float deltaTime)
 		{
 			// Report the current velocities and positions. Report Score?
-			await WriteLine(JsonSerializer.Serialize(deserializedSimulationFrame));
+			WriteLine(JsonSerializer.Serialize(deserializedSimulationFrame));
 
-			// Read and execute input.
-			// TODO: Consider running brain asynchronously.
-			if (sr != null && pipe != null)
+			if (dispatcher != null)
 			{
-				// Should only be called at most once.
-				if (connectTask != null && !connectTask.IsCompleted)
+				JsonCommand<CrawlerMoveInstruction> command = await AwaitTimeout(jsonParser.GetCommandAsync(), 1000, "wait for command");
+				// Get the last move instruction and save it for PostSimulateStepAsync.
+				foreach (var _moveInstruction in command.DeserializedObjects)
 				{
-					await connectTask;
-					await FlushLineQueue();
+					moveInstruction = _moveInstruction;
 				}
-				moveInstruction = await AwaitTimeout(sr.ReadLineAsync(), 3000, "read instruction");
-
-				//Debug.Log($"Line \"{moveInstruction}\" on creature {initData.Index}");
 			}
 		}
 
 		public void OnPostSimulateStepAsync(float deltaTime)
 		{
+			// moveInstruction can be null on timeout or if we're not connected to Python.
+			if (moveInstruction == null)
+				return;
+
 			// TODO: Do something with moveInstruction
 			moveInstruction = null;
 		}
 
 		private void OnDestroy()
 		{
-			if (connectTask != null && !connectTask.IsCompleted)
-				connectTask.Wait();
-
-			sw?.WriteLine("END");
-			sw?.Flush();
-
-
-			if (sr != null)
-			{
-				string line = sr.ReadLine();
-				while (line != "QUIT")
-				{
-					Debug.LogFormat("Unexpected Quitting Line {0}", line);
-					line = sr.ReadLine();
-				}
-			}
-
-			sw?.Close();
-			sr?.Close();
-			pipe?.Close();
+			WriteLine("END");
+			experiment.Multiplexer.RemoveParser(initData.Index);
 		}
 
-//#if UNITY_EDITOR
+// TODO: Include in werignac utils.
 		private async Task AwaitTimeout(Task task, int timeout, string context)
 		{
 			// TODO: Use timeouts when a certain flag is present in runtime settings.
@@ -248,6 +173,5 @@ namespace werignac.Crawling
 
 			return task.Result;
 		}
-//#endif
 	}
 }

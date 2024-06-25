@@ -93,6 +93,8 @@ def read_simulator_responses(organisms, sim_inst):
             score = float(line_split[1])
             organisms.loc[index, "Score"] = score
         else:
+            pass
+            """
             # Otherwise, a creature is starting execution.
             index = int(line_split[0])
             # Handle sending actions in parallel.
@@ -100,6 +102,7 @@ def read_simulator_responses(organisms, sim_inst):
             p.start()
             #t = threading.Thread(target=run_brain_for_creature, args=(organisms["Creature"][index],))
             #t.start()
+            """
 
 #region Brain Control
 
@@ -217,7 +220,7 @@ if __name__ == "__main__":
         organisms.loc[len(organisms.index)] = [CrawlerData(
             ((1, 1, 1), (0, 0, 0), (0.5, 1, 0.5)),
             ((0.5, 1, 0.5), (45, 0, 0), (0.5, 0, 0.5)),
-            CREATURE_PIPE_PREFIX + str(i)
+            ""#CREATURE_PIPE_PREFIX + str(i)
         ), 0]
 
     if DISPLAY_BEST_PERFORMERS:

@@ -4,13 +4,17 @@ using UnityEngine;
 using System.IO;
 using System.IO.Pipes;
 using System.Threading.Tasks;
+using System.Threading;
+using System;
 
 namespace werignac.Communication
 {
 	/// <summary>
 	/// A class that communicates with an external process using named pipes.
+	/// TODO: Get rid of Next() and line queue in ICommunicator. Defer to a buffer
+	/// that can be told asynchronously when to send the next line to a parser.
 	/// </summary>
-	public class PipeCommunicator : Object, ICommunicator
+	public class PipeCommunicator : UnityEngine.Object, ICommunicator
 	{
 		// IPC fields
 		private NamedPipeClientStream pipe = null;
@@ -29,28 +33,48 @@ namespace werignac.Communication
 		private Task readThread;
 
 		/// <summary>
-		/// Polling task that ends when an end seignal has been sent.
+		/// The action to call when a line is successfully read.
 		/// </summary>
-		private Task readEndSignalThread;
+		private Action<string> _onReadLine;
 
 		/// <summary>
-		/// A signal, that when set to true, ends the read loop.
+		/// Thread that waits for the signal to stop reading.
+		/// Cleans up the endReadThreadSignal afterwards.
 		/// </summary>
-		private bool endReadThreadSignal = false;
+		private Task endReadWaitThread;
+		
+		/// <summary>
+		/// A signal, that when set to true, ends the read loop.
+		/// TODO: Cleanup
+		/// </summary>
+		private ManualResetEventSlim endReadThreadSignal = new ManualResetEventSlim(false);
 
 		/// <summary>
 		/// Opens the pipe and streams and starts the read thread.
 		/// </summary>
-		public PipeCommunicator(string pipeName, float pipeTimeout)
+		public PipeCommunicator(string pipeName, float pipeTimeout, Action<string> onReadLine)
 		{
+			_onReadLine = onReadLine;
+
 			pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
 			pipe.Connect((int)(pipeTimeout * 1000));
 
 			sw = new StreamWriter(pipe);
 			sr = new StreamReader(pipe);
 
-			readEndSignalThread = ReadEndSignalThread();
+			endReadWaitThread = Task.Run(() => { WaitForEndSignal(); });
 			readThread = ReadThread();
+		}
+
+		/// <summary>
+		/// A method that just waits for the signal to stop reading and then
+		/// disposes the signal. Runs on a different thread to detect when
+		/// we should stop reading from the pipe.
+		/// </summary>
+		private void WaitForEndSignal()
+		{
+			endReadThreadSignal.Wait();
+			endReadThreadSignal.Dispose();
 		}
 
 		/// <summary>
@@ -62,12 +86,12 @@ namespace werignac.Communication
 		{
 			while (true)
 			{
-				// TODO: Wait for line async or cancellation, whichever comes first.
+				// Wait for line async or cancellation, whichever comes first.
 				Task<string> readLineTask = sr.ReadLineAsync();
-				await Task.WhenAny(readLineTask, readEndSignalThread);
+				Task awaitedEvent = await Task.WhenAny(endReadWaitThread, readLineTask);
 
 				// If we received the end signal, stop reading.
-				if (readEndSignalThread.IsCompleted)
+				if (awaitedEvent == endReadWaitThread)
 				{
 					return;
 				}
@@ -86,19 +110,9 @@ namespace werignac.Communication
 					{
 						lineQueue.Enqueue(line);
 					}
-				}
-			}
-		}
 
-		/// <summary>
-		/// TODO: Don't use polling for this. Use normal signals.
-		/// </summary>
-		/// <returns></returns>
-		private async Task ReadEndSignalThread()
-		{
-			while (! endReadThreadSignal)
-			{
-				await Task.Delay(100);
+					_onReadLine(line);
+				}
 			}
 		}
 
@@ -107,11 +121,11 @@ namespace werignac.Communication
 		/// </summary>
 		public void Close()
 		{
-			// TODO: Signal for the readthread to close using proper signaling.
-			endReadThreadSignal = true;
+			// Signal for the readthread to close using proper signaling.
+			endReadThreadSignal.Set();
 
 			// Wait for read thread to finish.
-			Task.WaitAll(readEndSignalThread, readThread);
+			Task.WaitAll(endReadWaitThread, readThread);
 
 			try
 			{
@@ -153,14 +167,6 @@ namespace werignac.Communication
 			sw.WriteLine(line);
 			sw.Flush();
 			pipe.Flush();
-			/*
-			sw.WriteLineAsync(line).ContinueWith((_) =>
-			{
-				sw.FlushAsync().ContinueWith((_) =>
-				{
-					pipe.FlushAsync();
-				});
-			});*/
 		}
 	}
 }

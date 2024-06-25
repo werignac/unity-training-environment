@@ -21,7 +21,10 @@ namespace werignac.GeneticAlgorithm.Dispatch
 {
 	/// <summary>
 	/// Class that communicates with the external evolution script.
+	/// 
+	/// TODO: Make into subsystem.
 	/// </summary>
+	[Subsystem(SubsystemLifetime.GAME)]
 	public class Dispatcher : MonoBehaviour
 	{
 		/// <summary>
@@ -29,13 +32,12 @@ namespace werignac.GeneticAlgorithm.Dispatch
 		/// commands. In theory the implementation is abstracted from the dispatcher,
 		/// but currently the dispatcher initializes a PipeCommunicator in Start().
 		/// </summary>
-		private ICommunicator communicator = null;
+		public ICommunicator Communicator { get; private set; } = null;
 
 		/// <summary>
-		/// Whether the Dispatcher should be readling lines from the communicator.
-		/// Set to false whilst an experiment is running and the experiment is reading from the communicator.
+		/// Object that 
 		/// </summary>
-		private bool hasReadPriviledge = true;
+		public PipeCommunicatorBuffer CommunicatorBuffer { get; private set; } = null;
 
 		// TODO: Use a dictionary instead of fields and make publicly accessible.
 		private class DispatcherSettings
@@ -62,34 +64,35 @@ namespace werignac.GeneticAlgorithm.Dispatch
 
 		private DispatcherSettings runtimeSettings = new DispatcherSettings();
 
-		[Header("Paralelism")]
-		[SerializeField, Tooltip("If true, uses Unity's SynchronizationContext. May cause blocking for tasks that expect to be in parallel.")]
-		private bool _useUnitySynchronizationContext = false;
-
 		[Header("Debugging")]
 		[SerializeField, Tooltip("Amount of time to wait before timing out on pipe connection (in seconds).")]
 		private float pipeTimeout = 10.0f;
 
 #if UNITY_EDITOR
 		[SerializeField, Tooltip("If true, use a preset pipe name for testing. Only available in-editor.")]
-		private bool useTestPipeName;
+		private bool useTestPipeName = true;
 
 		[SerializeField, Tooltip("The name of the pipe name to use for testing if useSetPipeName is true. Only available in-editor.")]
-		private string testPipeName;
+		private string testPipeName = "PipeA";
 #endif
-
-		private IParser<DispatchCommand> parser = null;
+		public ParserStack ParserStack { get; private set; } = null;
+		private IParser<ParsedErrorWarning> errorWarningParser = null;
+		private IParser<DispatchCommand> dispatchParser = null;
 
 		// Start is called before the first frame update
 		void Start()
 		{
-			DontDestroyOnLoad(gameObject);
-
 			// Override's Unity's SynchronizationContext with the default C# SynchronizationContext.
 			// This enables async functions to truely run in parallel, which is important for creatures
 			// who use individual pipes for communication.
 			SynchronizationContextSubsystem SyncSubsystem = SubsystemManagerComponent.Get().GetSubsystem<SynchronizationContextSubsystem>();
 			SyncSubsystem.SetSynchronizationContextType(SynchronizationContextSubsystem.SynchronizationContextType.C_SHARP);
+
+			if (SceneManager.GetActiveScene().name != "Dispatcher")
+			{
+				DestroyImmediate(this);
+				return;
+			}
 
 			// TODO: Make communicator object that handles purely reading and writing to pipes.
 			string[] commandLineArgs = Environment.GetCommandLineArgs();
@@ -104,23 +107,41 @@ namespace werignac.GeneticAlgorithm.Dispatch
 			// Connect to pipe.
 			if (pipename != null)
 			{
+				CommunicatorBuffer = new PipeCommunicatorBuffer(OnBufferOut);
 				Debug.Log($"Pipe name provided: {pipename}.");
-				communicator = new PipeCommunicator(pipename, pipeTimeout);
+				Communicator = new PipeCommunicator(pipename, pipeTimeout, CommunicatorBuffer.OnReadLine);
 				Debug.Log($"Connected to pipe \"{pipename}\".");
-				parser = new DispatchParser(communicator);
+				
+				ParserStack = new ParserStack();
+				// Listen for when an error or warning is parsed.
+				errorWarningParser = ParserStack.AddParser<ErrorWarningParser>();
+				// Listen for when commands are parsed.
+				dispatchParser = ParserStack.AddParser<DispatchParser>();
 			}
 			else
 				Debug.Log("No pipe name provided.");
 		}
 
+		/// <summary>
+		/// Empties the buffer into the parser stack.
+		/// </summary>
+		private void OnBufferOut(string line)
+		{
+			if (! ParserStack.TryParse(line, out string cumulativeErrorMessage))
+			{
+				WriteWarning(cumulativeErrorMessage);
+			}
+		}
+
 		#region Execution
 
 		/// <summary>
-		/// 
+		/// Gets the argument passed after a flag.
+		/// e.g. -f value -> GetCommandLineArgumentValue(["-f", "value"], "-f") returns "value"
 		/// </summary>
-		/// <param name="commandLineArgs"></param>
+		/// <param name="commandLineArgs">Command line arguments split by spaces.</param>
 		/// <param name="arg">Argument with the "-"</param>
-		/// <returns></returns>
+		/// <returns>The value that corresponds to arg.</returns>
 		private string GetCommandLineArgumentValue(string[] commandLineArgs, string arg)
 		{
 			int argIndex = Array.IndexOf(commandLineArgs, arg);
@@ -146,16 +167,21 @@ namespace werignac.GeneticAlgorithm.Dispatch
 		/// </summary>
 		private void Update()
 		{
-			// Check whether we've forefitted reading rights to an experiment.
-			// If there are commands to execute, execute them.
-			if (hasReadPriviledge && parser != null && parser.Next(out DispatchCommand command))
+			if (errorWarningParser != null && errorWarningParser.Next(out ParsedErrorWarning errorWarningCommand))
 			{
-				ExecuteCommand(command);
+				OnErrorWarningParsed(errorWarningCommand);
+				CommunicatorBuffer.AcceptNext();
+			}
+
+			if (dispatchParser != null && dispatchParser.Next(out DispatchCommand dispatchCommand))
+			{
+				ExecuteCommand(dispatchCommand);
+				// Communication Buffer Accept Next is in ExecuteCommand (some finish asynchronously).
 			}
 		}
 
 		/// <summary>
-		/// Executes a single command.
+		/// Executes a single command. Ensure that CommunicatorBuffer.AcceptNext() is called when a command finishes.
 		/// </summary>
 		/// <param name="command">The command to execute.</param>
 		/// <returns>Whether to continue execution of commands.</returns>
@@ -179,12 +205,32 @@ namespace werignac.GeneticAlgorithm.Dispatch
 
 				case DispatchCommandType.SET:
 					// TODO: Implement.
+					CommunicatorBuffer.AcceptNext();
 					break;
 
 				case DispatchCommandType.QUIT:
-					communicator.Write("QUIT");
+					Communicator.Write("QUIT");
+					CommunicatorBuffer.AcceptNext();
 					Application.Quit();
 					break;
+			}
+		}
+
+		/// <summary>
+		/// Function called when an error or warning sent from
+		/// outside is parsed.
+		/// </summary>
+		/// <param name="errorWarning">The parsed error or warning.</param>
+		private void OnErrorWarningParsed(ParsedErrorWarning errorWarning)
+		{
+			if (errorWarning.IsError)
+			{
+				Debug.LogError(errorWarning);
+				Application.Quit();
+			}
+			else
+			{
+				Debug.LogWarning(errorWarning);
 			}
 		}
 
@@ -226,11 +272,12 @@ namespace werignac.GeneticAlgorithm.Dispatch
 				experiment.GetOnExperimentTerminatedEvent().AddListener(OnAllSimulationsFinished);
 			}
 
-			communicator.Write("SUCCESS");
+			Communicator.Write("SUCCESS");
 
-			// Forfeit control of communicator to experiment.
-			hasReadPriviledge = false;
-			experiment.StartReadCreatures(communicator);
+			experiment.StartReadCreatures();
+			
+			// Setup has finished. Read next command / parse creatures.
+			CommunicatorBuffer.AcceptNext();
 		}
 
 		/// <summary>
@@ -240,10 +287,10 @@ namespace werignac.GeneticAlgorithm.Dispatch
 		private void OnCreatureStartedSimulation(SimulationInitializationData creature)
 		{
 			Debug.LogFormat("Creature {0} started simulation.", creature.Index);
-			if (communicator != null)
+			if (Communicator != null)
 			{
 				Debug.Log($"Writing \"{creature.Index}\" to pipe.");
-				communicator.Write(creature.Index.ToString());
+				Communicator.Write(creature.Index.ToString());
 			}
 		}
 
@@ -257,10 +304,10 @@ namespace werignac.GeneticAlgorithm.Dispatch
 		{
 			Debug.LogFormat("Creature {0} finished with score: {1}", creature.Index, score);
 
-			if (communicator != null)
+			if (Communicator != null)
 			{
 				Debug.Log($"Writing \"{toSend}\" to pipe.");
-				communicator.Write(toSend);
+				Communicator.Write(toSend);
 			}
 		}
 
@@ -270,9 +317,7 @@ namespace werignac.GeneticAlgorithm.Dispatch
 		/// </summary>
 		private void OnAllSimulationsFinished()
 		{
-			// Regain control of communications.
-			hasReadPriviledge = true;
-			communicator?.Write("END");
+			Communicator?.Write("END");
 		}
 
 		/// <summary>
@@ -282,7 +327,7 @@ namespace werignac.GeneticAlgorithm.Dispatch
 		private void WriteWarning(string message)
 		{
 			Debug.LogWarning(message);
-			communicator?.WriteWarning(message);
+			Communicator?.WriteWarning(message);
 		}
 
 		/// <summary>
@@ -292,7 +337,7 @@ namespace werignac.GeneticAlgorithm.Dispatch
 		private void WriteError(string message)
 		{
 			Debug.LogError(message);
-			communicator?.WriteError(message);	
+			Communicator?.WriteError(message);	
 		}
 
 		/// <summary>
@@ -301,10 +346,11 @@ namespace werignac.GeneticAlgorithm.Dispatch
 		private void OnDestroy()
 		{
 			// Close pipe when tasks are done.
-			if (communicator != null)
+			if (Communicator != null)
 			{
 				Debug.Log("Cleaning pipe and streams.");
-				communicator.Close();
+				CommunicatorBuffer.Close();
+				Communicator.Close();
 			}
 		}
 

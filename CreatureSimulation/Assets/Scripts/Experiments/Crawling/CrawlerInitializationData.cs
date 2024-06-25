@@ -93,31 +93,4 @@ namespace werignac.Crawling
 			return new CrawlerInitializationData(i, DeserializedCrawlerData.Random());
 		}
 	}
-
-	public class CrawlerReader : CreatureReader<CrawlerInitializationData>
-	{
-		private const string TERMINATOR = "END";
-		private int creatureCount = 0;
-
-		public override IEnumerable<CrawlerInitializationData> ReadCreatures(ICommunicator communicator)
-		{
-			IsDoneReading = false;
-			// TODO: Check when pipe has closed.
-
-			string line;
-
-			while (communicator.Next(out line) && !TERMINATOR.Equals(line))
-			{
-				foreach (string jsonStr in ReadClosedJSONObjects(line))
-				{
-					DeserializedCrawlerData DeserializedData = JsonSerializer.Deserialize<DeserializedCrawlerData>(jsonStr);
-					CrawlerInitializationData Data = new CrawlerInitializationData(creatureCount++, DeserializedData);
-					yield return Data;
-				}
-			}
-
-			IsDoneReading = true;
-			onIsDoneReading.Invoke();
-		}
-	}
 }

@@ -45,37 +45,4 @@ namespace werignac.FallingRectangularPrism
 			return new FallingRectangularPrismData(i);
 		}
 	}
-
-	public class FRPCreatureReader : CreatureReader<FallingRectangularPrismData>
-	{
-		private int creatureCount = 0;
-
-		private const string TERMINATOR = "END";
-
-		/// <summary>
-		/// TODO: Asynchronously
-		/// </summary>
-		/// <param name="sr"></param>
-		/// <returns></returns>
-		public override IEnumerable<FallingRectangularPrismData> ReadCreatures(ICommunicator communicator)
-		{
-			IsDoneReading = false;
-			// TODO: Check when pipe has closed.
-
-			string line;
-
-			while (communicator.Next(out line) && !TERMINATOR.Equals(line))
-			{
-				foreach (var jsonStr in ReadClosedJSONObjects(line))
-				{
-					DeserializedFallingRectangularPrismData DeserializedData = JsonSerializer.Deserialize<DeserializedFallingRectangularPrismData>(jsonStr);
-					FallingRectangularPrismData Data = new FallingRectangularPrismData(creatureCount++, DeserializedData);
-					yield return Data;
-				}
-			}
-
-			IsDoneReading = true;
-			onIsDoneReading.Invoke();
-		}
-	}
 }
