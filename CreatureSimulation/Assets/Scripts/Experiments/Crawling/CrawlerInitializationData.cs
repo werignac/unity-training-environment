@@ -13,8 +13,6 @@ namespace werignac.Crawling
 	{
 		public struct BodyPart
 		{
-			const float MIN_SIZE_LENGTH = 0.01f;
-
 			public DeserializedVector Size { get; set; }
 			public DeserializedVector Rotation { get; set; }
 			public DeserializedVector ConnectionPoint { get; set; }
@@ -25,9 +23,9 @@ namespace werignac.Crawling
 				toReturn.Size = DeserializedVector.Random01();
 
 				DeserializedVector ToCap = toReturn.Size;
-				ToCap.x = Mathf.Max(ToCap.x, MIN_SIZE_LENGTH);
-				ToCap.y = Mathf.Max(ToCap.y, MIN_SIZE_LENGTH);
-				ToCap.z = Mathf.Max(ToCap.z, MIN_SIZE_LENGTH);
+				ToCap.x = Mathf.Max(ToCap.x, 0);
+				ToCap.y = Mathf.Max(ToCap.y, 0);
+				ToCap.z = Mathf.Max(ToCap.z, 0);
 				toReturn.Size = ToCap;
 
 				toReturn.Rotation = DeserializedVector.RandomAngle();
@@ -54,9 +52,10 @@ namespace werignac.Crawling
 	{
 		public struct BodyPart
 		{
+			const float MIN_SIZE_LENGTH = 0.1f;
 			public BodyPart(DeserializedCrawlerData.BodyPart other)
 			{
-				Size = other.Size.ToVector();
+				Size = Vector3.Max(other.Size.ToVector(), Vector3.one * MIN_SIZE_LENGTH);
 				Rotation = other.Rotation.ToVector();
 				ConnectionPoint = other.ConnectionPoint.ToVector();
 			}

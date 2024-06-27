@@ -24,7 +24,7 @@ CREATURE_PIPE_PREFIX = "Pipe"
 #region Initialization Data
 
 class VectorData:
-    def __init__(self, values=None):
+    def __init__(self, values: tuple = None):
         self.values = np.random.random(3) if values is None else values
 
     def serialize(self):
@@ -32,9 +32,11 @@ class VectorData:
 
 
 class PartData:
-    def __init__(self, size=None, rotation=None, connection_point=None):
+    def __init__(self, size: tuple = None, rotation: tuple = None, connection_point: tuple = None):
         self.size = VectorData(size)
         self.rotation = VectorData(rotation)
+        if rotation is None:  # Convert random axes from 0-1 to 0-360
+            self.rotation.values *= 360
         self.connection_point = VectorData(connection_point)
 
     def serialize(self):
@@ -44,7 +46,7 @@ class PartData:
 
 
 class CrawlerData:
-    def __init__(self, first=(), second=(), pipe_name=""):
+    def __init__(self, first: tuple = (), second: tuple = (), pipe_name=""):
         self.first = PartData(*first)
         self.second = PartData(*second)
         self.pipe_name = pipe_name
@@ -166,11 +168,7 @@ if __name__ == "__main__":
     # Create an initial population
     organisms = pd.DataFrame(columns=["Creature", "Score"])
     for i in range(128):
-        organisms.loc[len(organisms.index)] = [CrawlerData(
-            ((1, 1, 1), (0, 0, 0), (0.5, 1, 0.5)),
-            ((0.5, 1, 0.5), (45, 0, 0), (0.5, 0, 0.5)),
-            ""#CREATURE_PIPE_PREFIX + str(i)
-        ), 0]
+        organisms.loc[len(organisms.index)] = [CrawlerData(), 0]
 
     if DISPLAY_BEST_PERFORMERS:
         best_performers = []
