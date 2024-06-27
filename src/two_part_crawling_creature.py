@@ -9,7 +9,7 @@ import pandas as pd
 import threading
 import multiprocessing
 
-from simulation_instance import SimulationInstance, SimulationTask
+from simulation_instance import SimulationInstance
 
 #region Statics
 
@@ -59,26 +59,30 @@ class CrawlerData:
 #region Running Simulation
 
 def execute_epoch(organisms, sim_inst: SimulationInstance):
-
-    # Start thread to read creatures.
-    read_sim_responses_thread = threading.Thread(target=read_simulator_responses, args=(organisms, sim_inst))
-    # read_simulator_responses changes "organisms" in-place.
-    read_sim_responses_thread.start()
-
+    # Send the creature initialization data.
     serialize_v = np.vectorize(lambda c: json.dumps(c.serialize()))
     serializations = serialize_v(organisms["Creature"].to_numpy())
     sim_inst.send_creatures(serializations)
     sim_inst.end_send_creatures()
-
-    read_sim_responses_thread.join()
-    # by now "organisms" is updated to have the true scores from the read_simulator_responses thread.
+    # Read the responses from the simulator and process them
+    # this includes starting new creatures, reporting the final
+    # scores of creatures, and data about the initial state of creatures.
+    read_simulator_responses(organisms, sim_inst)
+    # By now "organisms" is updated to have the true scores from the read_simulator_responses thread.
     sorted_organisms = organisms.sort_values("Score", ascending=False)
     print(f'Top Performers:\n{sorted_organisms.head(10)}')
 
     return sorted_organisms
 
 
-def read_simulator_responses(organisms, sim_inst):
+def read_simulator_responses(organisms: pd.DataFrame, sim_inst: SimulationInstance):
+
+    """
+    Mapping of creature indexes to running brains. The brains take in simulation frame
+    data and create outputs for the running creature simulations.
+    """
+    running_brains: dict = dict()
+
     while True:
         line = sim_inst.read_line()
 
@@ -87,111 +91,56 @@ def read_simulator_responses(organisms, sim_inst):
 
         line_split = line.split(" ")
 
-        # If there is a space, this is a score that is being reported.
+        # If there is a space, this is either a score that is being reported,
+        # or data about a frame that is being sent.
         if len(line_split) > 1:
             index = int(line_split[0])
-            score = float(line_split[1])
-            organisms.loc[index, "Score"] = score
+            score_parsed: bool = True
+            score: float
+            try:
+                score = float(line_split[1])
+            except Exception as e:
+                score_parsed = False
+
+            if score_parsed:
+                organisms.loc[index, "Score"] = score
+                del running_brains[index]
+            else:
+                brain: CreatureBrain = running_brains[index]
+                command = brain.process_frame_data(json.loads(line_split[1]))
+                if not (command is None):
+                    to_write = f"{index} {command}"
+                    sim_inst.write_line(to_write)
+                    sim_inst.flush_pipe()
         else:
-            pass
-            """
             # Otherwise, a creature is starting execution.
             index = int(line_split[0])
-            # Handle sending actions in parallel.
-            p = multiprocessing.Process(target=run_brain_for_creature, args=(organisms["Creature"][index],))
-            p.start()
-            #t = threading.Thread(target=run_brain_for_creature, args=(organisms["Creature"][index],))
-            #t.start()
-            """
+            running_brains[index] = CreatureBrain(organisms.loc[index, "Creature"], index)
 
 #region Brain Control
 
-
-def run_brain_for_creature(creature):
-    brain = CreatureBrain(os.path.join(PIPE_PATH, creature.pipe_name))
-    brain.continuous_read()
-    brain.close()
-
-
-# Inherits from SimulationTask to reduce redundant coding. Should probably inherit from a basic communication class.
-class CreatureBrainTask(SimulationTask):
-    def __init__(self, pipe_handle, overlap, **kwargs):
-        SimulationTask.__init__(self, pipe_handle, overlap, **kwargs)
-
-        self.has_received_end = False
-
-    def _get_finished_pipe_reading(self):
-        return self.has_received_end
-
-    def _on_read_line_from_pipe(self, line):
-        if not SimulationTask._on_read_line_from_pipe(self, line):
-            return False
-
-        if line == "END":
-            self.has_received_end = True
-            return False
-
-        return True
-
-
 class CreatureBrain:
-    def __init__(self, pipe_path_and_name:str):
-        self.pipe_and_path_name = pipe_path_and_name
-        self.line_increment = 0
+    def __init__(self, creature: CrawlerData, index: int):
+        """
+        TODO: embed index into CrawlerData (and don't include in json).
+        """
+        self._creature = creature
+        self._creature_index = index
+        self._unity_creature_data = None
 
-        print(f'Pipe "{self.pipe_and_path_name}" Creating...')
-        # From https://www.codeproject.com/Questions/5340484/How-to-send-back-data-through-Python-to-Csharp-thr
-        self.pipe_handle = win32pipe.CreateNamedPipe(
-            pipe_path_and_name,
-            win32pipe.PIPE_ACCESS_DUPLEX | win32file.FILE_FLAG_OVERLAPPED,
-            win32pipe.PIPE_TYPE_MESSAGE | win32pipe.PIPE_READMODE_MESSAGE | win32pipe.PIPE_WAIT,
-            1, 65536, 65536,
-            0,
-            None)
+    def process_frame_data(self, frame_data: object) -> str:
+        """
+        Takes a json object sent specifically to this brain and
+        returns a command. If None is returned, no command should
+        be sent.
+        """
 
-        self.overlap = pywintypes.OVERLAPPED()
-        self.overlap.hEvent = win32event.CreateEvent(None, 0, 0, None)
-        win32pipe.ConnectNamedPipe(self.pipe_handle, self.overlap)
-        print(f'Pipe "{self.pipe_and_path_name}" Connected.')
-        win32file.GetOverlappedResult(self.pipe_handle, self.overlap, True)
+        if self._unity_creature_data == None:
+            self._unity_creature_data = frame_data
+            return None
 
-        self.task: SimulationTask = CreatureBrainTask(self.pipe_handle, self.overlap)
-
-    def continuous_read(self):
-        is_first_line = True
-        line = ""
-
-        # TODO: Remove. Used for testing true hanging on missing line.
-        self.task.write_line("\r\n" * 499)
-        self.task.flush()
-
-        while True:
-            try:
-                line = self.task.read_line()
-                self.line_increment += 1
-                #print(f"Pipe {self.pipe_and_path_name} completed line {self.line_increment - 1}")
-            except:
-                print(f'Timeout for pipe {self.pipe_and_path_name} on line {self.line_increment}/500 : "{line}"')
-
-            if not line:
-                break
-
-            if is_first_line:
-                is_first_line = False
-            else:
-                '''
-                self.task.write_line(f"{self.line_increment}")
-                self.task.flush()
-                '''
-
-
-    def close(self):
-        print(f'Pipe "{self.pipe_and_path_name}" Quitting...')
-        self.task.write_line("QUIT")
-        win32file.FlushFileBuffers(self.pipe_handle)
-        win32pipe.DisconnectNamedPipe(self.pipe_handle)
-        win32file.CloseHandle(self.pipe_handle)
-        print(f'Pipe "{self.pipe_and_path_name}" Closed.')
+        # TODO: Use frame data to make a smart decision.
+        return "{}"
 
 #endregion Brain Control
 
@@ -216,7 +165,7 @@ if __name__ == "__main__":
 
     # Create an initial population
     organisms = pd.DataFrame(columns=["Creature", "Score"])
-    for i in range(256):
+    for i in range(128):
         organisms.loc[len(organisms.index)] = [CrawlerData(
             ((1, 1, 1), (0, 0, 0), (0.5, 1, 0.5)),
             ((0.5, 1, 0.5), (45, 0, 0), (0.5, 0, 0.5)),

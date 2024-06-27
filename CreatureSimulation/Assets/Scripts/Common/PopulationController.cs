@@ -12,6 +12,11 @@ using werignac.GeneticAlgorithm.Subsystems;
 
 namespace werignac.GeneticAlgorithm
 {
+	/// <summary>
+	/// TODO: Check for when an simulation instance object is destroyed to do PopulationStep instead of relying on
+	/// simulation instances to tell when they're done.
+	/// </summary>
+	/// <typeparam name="T_InitData"></typeparam>
 	public class PopulationController<T_InitData> : MonoBehaviour where T_InitData : SimulationInitializationData
 	{
 		#region Fields
@@ -72,8 +77,17 @@ namespace werignac.GeneticAlgorithm
 			lock (population)
 			{
 				population.Enqueue(creature);
-				PopulationStep();
 			}
+		}
+
+		/// <summary>
+		/// Called after all the creatures for an experiment have been enqueued.
+		/// 
+		/// TODO: Prevent calling twice before experiment has finished.
+		/// </summary>
+		public void StartSimulations()
+		{
+			PopulationStep();
 		}
 
 		/// <summary>
@@ -148,16 +162,16 @@ namespace werignac.GeneticAlgorithm
 			if (debug)
 				Debug.LogFormat("Simulating Generation Creature: {0}", creature.Index);
 
+			onCreatureStartedSimulation.Invoke(creature);
 			var _instance = Instantiate(simulationSessionPrefab);
 			SimulationSessionController<T_InitData> _simulationSessionController = _instance.GetComponent<SimulationSessionController<T_InitData>>();
 			_simulationSessionController.Initialize(creature, layer);
 
 			simulations.Add(_simulationSessionController);
-			onCreatureStartedSimulation.Invoke(creature);
 		}
 
 		/// <summary>
-		/// Tries to pop a creature off the population queue and make a simulation instance.
+		/// Tries to pop creatures off the population queue and make a simulation instance.
 		/// Fails if we're at max capacity for simulation instances.
 		/// Fails and fires an event if we've run out of creatures to simulate and all our simulations have finished.
 		/// </summary>
@@ -174,25 +188,25 @@ namespace werignac.GeneticAlgorithm
 
 			// If we're at max capacity for simulations, don't create another simulation
 			// until one of the existing ones has finished.
-			if (simulations.Count >= _sessionLayers.Count)
-				return;
-
-			// The previous check confirms that there's a simulation layer avilable.
-			// Find and use it for the new simulation.
-			HashSet<string> unusedSessionLayers = new HashSet<string>(_sessionLayers);
-			foreach (SimulationSessionController<T_InitData> controller in simulations)
-				unusedSessionLayers.Remove(controller.SimulationLayer);
-			string layer = null;
-			foreach (string _layer in unusedSessionLayers)
+			while (simulations.Count < _sessionLayers.Count && population.Count > 0)
 			{
-				layer = _layer;
-				break;
-			}
 
-			// If there are creatures to test and we still have slots
-			// for simulation, create a new simulation instance.
-			CreateSimulationSessionInstance(population.Dequeue(), layer);
-			return;
+				// The previous check confirms that there's a simulation layer avilable.
+				// Find and use it for the new simulation.
+				HashSet<string> unusedSessionLayers = new HashSet<string>(_sessionLayers);
+				foreach (SimulationSessionController<T_InitData> controller in simulations)
+					unusedSessionLayers.Remove(controller.SimulationLayer);
+				string layer = null;
+				foreach (string _layer in unusedSessionLayers)
+				{
+					layer = _layer;
+					break;
+				}
+
+				// If there are creatures to test and we still have slots
+				// for simulation, create a new simulation instance.
+				CreateSimulationSessionInstance(population.Dequeue(), layer);
+			}
 		}
 
 		/// <summary>

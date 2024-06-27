@@ -217,6 +217,7 @@ namespace werignac.GeneticAlgorithm
 			// remove the all-consuming json parser.
 			if (toEnqueue.IsEnd)
 			{
+				populationController.StartSimulations();
 				parserStack.PopParser(jsonParser);
 				parserStack = null;
 				jsonParser = null;

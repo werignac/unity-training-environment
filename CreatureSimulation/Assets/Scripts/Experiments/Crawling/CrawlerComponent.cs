@@ -129,6 +129,7 @@ namespace werignac.Crawling
 			if (dispatcher != null)
 			{
 				JsonCommand<CrawlerMoveInstruction> command = await AwaitTimeout(jsonParser.GetCommandAsync(), 1000, "wait for command");
+				dispatcher.CommunicatorBuffer.AcceptNext();
 				// Get the last move instruction and save it for PostSimulateStepAsync.
 				foreach (var _moveInstruction in command.DeserializedObjects)
 				{
@@ -149,7 +150,6 @@ namespace werignac.Crawling
 
 		private void OnDestroy()
 		{
-			WriteLine("END");
 			experiment.Multiplexer.RemoveParser(initData.Index);
 		}
 
