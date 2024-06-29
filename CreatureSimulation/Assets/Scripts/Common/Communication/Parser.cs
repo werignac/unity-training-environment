@@ -20,7 +20,7 @@ namespace werignac.Communication
 		/// Starts unfired.
 		/// TODO: Cleanup parsedCommandEvent.
 		/// </summary>
-		private AutoResetEvent parsedCommandEvent = new AutoResetEvent(false);
+		private ManualResetEvent parsedCommandEvent = new ManualResetEvent(false);
 
 		/// <summary>
 		/// Callback for when a command is parsed.
@@ -51,17 +51,7 @@ namespace werignac.Communication
 		/// <returns>Whether there was a command that needed to be processed.</returns>
 		public bool Next(out CommandType command)
 		{
-			command = default(CommandType);
-
-			lock(_parsedCommands)
-			{
-				if (_parsedCommands.Count == 0)
-					return false;
-
-				command = _parsedCommands.Dequeue();
-			}
-
-			return true;
+			return TryDequeueWithEvent(out command);
 		}
 
 		/// <summary>
@@ -70,22 +60,37 @@ namespace werignac.Communication
 		/// <returns>The command that came in.</returns>
 		public async Task<CommandType> GetCommandAsync()
 		{
+			CommandType command;
+
 			// If there is already a parsed command waiting to be processed,
 			// return it.
-			lock (_parsedCommands)
-			{
-				if (_parsedCommands.Count > 0)
-					return _parsedCommands.Dequeue();
-			}
+			if (TryDequeueWithEvent(out command))
+				return command;
 
 			// Wait for signal that a command has been parsed.
 			await Task.Run(()=> { parsedCommandEvent.WaitOne(); });
 
 			// Return the new parsed command that just came in.
+			TryDequeueWithEvent(out command);
+			return command;
+		}
+
+		private bool TryDequeueWithEvent(out CommandType command)
+		{
+			command = default(CommandType);
+
 			lock (_parsedCommands)
 			{
-				return _parsedCommands.Dequeue();
+				if (_parsedCommands.Count == 0)
+					return false;
+
+				command = _parsedCommands.Dequeue();
+
+				if (_parsedCommands.Count == 0)
+					parsedCommandEvent.Reset();
 			}
+
+			return true;
 		}
 
 		/// <summary>
@@ -106,10 +111,10 @@ namespace werignac.Communication
 				lock(_parsedCommands)
 				{
 					_parsedCommands.Enqueue(command);
+					//Signal that a command has been parsed.
+					parsedCommandEvent.Set();
 				}
 
-				//Signal that a command has been parsed.
-				parsedCommandEvent.Set();
 				if (onParsedCallback != null)
 					onParsedCallback(command);
 			}

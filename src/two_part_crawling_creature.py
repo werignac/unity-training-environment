@@ -15,7 +15,7 @@ from simulation_instance import SimulationInstance
 
 PIPE_PATH = '\\\\.\\pipe\\'
 PIPE_NAME = "PipeA"
-SIMULATOR_PATH = "../CreatureSimulation/Builds/2024-06-02_04-00/CreatureSimulation.exe"
+SIMULATOR_PATH = "../CreatureSimulation/Builds/2024-06-29_13-03/CreatureSimulation.exe"
 SIMULATOR_ARGS = ["-batchmode", "-nographics", "-p", PIPE_NAME]
 CREATURE_PIPE_PREFIX = "Pipe"
 
@@ -85,6 +85,9 @@ def read_simulator_responses(organisms: pd.DataFrame, sim_inst: SimulationInstan
     """
     running_brains: dict = dict()
 
+    # TODO: Remove
+    # has_sent: bool = False
+
     while True:
         line = sim_inst.read_line()
 
@@ -107,6 +110,7 @@ def read_simulator_responses(organisms: pd.DataFrame, sim_inst: SimulationInstan
             if score_parsed:
                 organisms.loc[index, "Score"] = score
                 del running_brains[index]
+                print(f"\tCreature {index} ended")
             else:
                 brain: CreatureBrain = running_brains[index]
                 command = brain.process_frame_data(json.loads(line_split[1]))
@@ -117,7 +121,14 @@ def read_simulator_responses(organisms: pd.DataFrame, sim_inst: SimulationInstan
         else:
             # Otherwise, a creature is starting execution.
             index = int(line_split[0])
+            print(f"\tCreature {index} started")
             running_brains[index] = CreatureBrain(organisms.loc[index, "Creature"], index)
+            """
+            if not has_sent:
+                sim_inst.write_line("0 {}\n1 {}\n2 {}\n3 {}\n4 {}\n5 {}\n6 {}\n7 {}\n8 {}\n9 {}\n10 {}\n11 {}\n12 {}\n13 {}\n14 {}\n15 {}\n"*500)
+                sim_inst.flush_pipe()
+                has_sent = True
+                """
 
 #region Brain Control
 
@@ -129,6 +140,7 @@ class CreatureBrain:
         self._creature = creature
         self._creature_index = index
         self._unity_creature_data = None
+        self._data_count = 0
 
     def process_frame_data(self, frame_data: object) -> str:
         """
@@ -136,11 +148,12 @@ class CreatureBrain:
         returns a command. If None is returned, no command should
         be sent.
         """
-
+        # Called Once
         if self._unity_creature_data == None:
             self._unity_creature_data = frame_data
             return None
-
+        self._data_count += 1
+        print(f"\t\t{self._creature_index} received line {self._data_count} with contents {frame_data}")
         # TODO: Use frame data to make a smart decision.
         return "{}"
 
@@ -167,7 +180,7 @@ if __name__ == "__main__":
 
     # Create an initial population
     organisms = pd.DataFrame(columns=["Creature", "Score"])
-    for i in range(128):
+    for i in range(256):
         organisms.loc[len(organisms.index)] = [CrawlerData(), 0]
 
     if DISPLAY_BEST_PERFORMERS:

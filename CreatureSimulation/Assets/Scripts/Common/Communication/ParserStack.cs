@@ -113,6 +113,7 @@ namespace werignac.Communication
 					if (parser.TryParse(lineToParse, out string errorMessage))
 					{
 						wasParsed = true;
+						Debug.Log($"Parsed Line: {lineToParse} on parser {parser}.");
 						break;
 					}
 					else

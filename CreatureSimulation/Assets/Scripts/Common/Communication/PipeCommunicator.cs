@@ -109,6 +109,7 @@ namespace werignac.Communication
 					lock (lineQueue)
 					{
 						lineQueue.Enqueue(line);
+						Debug.Log($"Read Line from Pipe: \"{line}\".");
 					}
 
 					_onReadLine(line);
