@@ -72,6 +72,8 @@ namespace werignac.Communication
 
 			// Return the new parsed command that just came in.
 			TryDequeueWithEvent(out command);
+			if (command == null)
+				throw new System.Exception($"ParsedCommandEvent set when queue was empty on parser {this}.");
 			return command;
 		}
 

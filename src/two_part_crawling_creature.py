@@ -15,7 +15,7 @@ from simulation_instance import SimulationInstance
 
 PIPE_PATH = '\\\\.\\pipe\\'
 PIPE_NAME = "PipeA"
-SIMULATOR_PATH = "../CreatureSimulation/Builds/2024-06-29_13-03/CreatureSimulation.exe"
+SIMULATOR_PATH = "../CreatureSimulation/Builds/2024-06-30_16-43/CreatureSimulation.exe"
 SIMULATOR_ARGS = ["-batchmode", "-nographics", "-p", PIPE_NAME]
 CREATURE_PIPE_PREFIX = "Pipe"
 
@@ -110,7 +110,7 @@ def read_simulator_responses(organisms: pd.DataFrame, sim_inst: SimulationInstan
             if score_parsed:
                 organisms.loc[index, "Score"] = score
                 del running_brains[index]
-                print(f"\tCreature {index} ended")
+                #print(f"\tCreature {index} ended")
             else:
                 brain: CreatureBrain = running_brains[index]
                 command = brain.process_frame_data(json.loads(line_split[1]))
@@ -121,7 +121,7 @@ def read_simulator_responses(organisms: pd.DataFrame, sim_inst: SimulationInstan
         else:
             # Otherwise, a creature is starting execution.
             index = int(line_split[0])
-            print(f"\tCreature {index} started")
+            #print(f"\tCreature {index} started")
             running_brains[index] = CreatureBrain(organisms.loc[index, "Creature"], index)
             """
             if not has_sent:
@@ -153,7 +153,7 @@ class CreatureBrain:
             self._unity_creature_data = frame_data
             return None
         self._data_count += 1
-        print(f"\t\t{self._creature_index} received line {self._data_count} with contents {frame_data}")
+        #print(f"\t\t{self._creature_index} received line {self._data_count} with contents {frame_data}")
         # TODO: Use frame data to make a smart decision.
         return "{}"
 
