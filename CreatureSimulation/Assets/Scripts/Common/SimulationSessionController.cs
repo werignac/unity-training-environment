@@ -23,6 +23,12 @@ namespace werignac.GeneticAlgorithm
 		private float simulationProgress = 0f;
 
 		/// <summary>
+		/// Whether the simulation has terminated early as determined
+		/// by the IFitnessEvaluator.
+		/// </summary>
+		private bool hasTerminatedEarly = false;
+
+		/// <summary>
 		/// The physics layer used for this simulation. Assumes that all
 		/// children of this GameObject are on the same layer.
 		/// </summary>
@@ -144,7 +150,7 @@ namespace werignac.GeneticAlgorithm
 			// Update the amount of time spent on this simulation.
 			simulationProgress += Time.fixedDeltaTime;
 			// Evaluate the creature's score.
-			_fitness.Evaluate(creatureObject);
+			_fitness.Evaluate(creatureObject, out hasTerminatedEarly);
 		}
 
 		public float GetScore()
@@ -154,7 +160,7 @@ namespace werignac.GeneticAlgorithm
 
 		public bool GetHasFinished()
 		{
-			return simulationProgress >= simulationDuration;
+			return simulationProgress >= simulationDuration || hasTerminatedEarly;
 		}
 	}
 }

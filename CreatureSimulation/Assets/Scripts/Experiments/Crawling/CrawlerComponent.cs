@@ -128,7 +128,7 @@ namespace werignac.Crawling
 
 			if (dispatcher != null)
 			{
-				JsonCommand<CrawlerMoveInstruction> command = await AwaitTimeout(jsonParser.GetCommandAsync(), 1000, "wait for command");
+				JsonCommand<CrawlerMoveInstruction> command = await WerignacUtils.AwaitTimeout(jsonParser.GetCommandAsync(), 1000, $"wait for command in creature {initData.Index}.");
 				dispatcher.CommunicatorBuffer.AcceptNext();
 				// Get the last move instruction and save it for PostSimulateStepAsync.
 				foreach (var _moveInstruction in command.DeserializedObjects)
@@ -151,27 +151,6 @@ namespace werignac.Crawling
 		private void OnDestroy()
 		{
 			experiment.Multiplexer.RemoveParser(initData.Index);
-		}
-
-// TODO: Include in werignac utils.
-		private async Task AwaitTimeout(Task task, int timeout, string context)
-		{
-			// TODO: Use timeouts when a certain flag is present in runtime settings.
-			Task returnedTask = await Task.WhenAny(task, Task.Delay(timeout));
-
-			if (returnedTask != task)
-				throw new System.Exception($"Timeout in CralwerComponent after {timeout / 1000} seconds on creature {initData.Index} when trying to {context}.");
-		}
-
-		private async Task<T> AwaitTimeout<T>(Task<T> task, int timeout, string context)
-		{
-			// TODO: Use timeouts when a certain flag is present in runtime settings.
-			Task returnedTask = await Task.WhenAny(task, Task.Delay(timeout));
-
-			if (returnedTask != task)
-				throw new System.Exception($"Timeout in CrawlerComponent after {timeout / 1000} seconds on creature {initData.Index} when trying to {context}.");
-
-			return task.Result;
 		}
 	}
 }

@@ -11,8 +11,10 @@ namespace werignac.GeneticAlgorithm
 		Vector2 initialPoint;
 		float score;
 
-		public float Evaluate(GameObject creature)
+		public float Evaluate(GameObject creature, out bool terminateEarly)
 		{
+			terminateEarly = false;
+
 			ArticulationBody body = creature.GetComponentInChildren<ArticulationBody>();
 			Vector2 currentPoint = new Vector2(body.worldCenterOfMass.x, body.worldCenterOfMass.z);
 

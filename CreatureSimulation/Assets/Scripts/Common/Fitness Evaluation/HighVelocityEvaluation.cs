@@ -9,8 +9,10 @@ namespace werignac.GeneticAlgorithm
 	{
 		private float highestVel = 0;
 
-		public float Evaluate(GameObject creature)
+		public float Evaluate(GameObject creature, out bool terminateEarly)
 		{
+			terminateEarly = false;
+
 			foreach (ArticulationBody ab in creature.GetComponentsInChildren<ArticulationBody>())
 			{
 				highestVel = Mathf.Max(highestVel, ab.velocity.magnitude);

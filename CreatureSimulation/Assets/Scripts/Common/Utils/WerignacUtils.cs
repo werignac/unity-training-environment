@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
+using System.Threading.Tasks;
 
 namespace werignac.Utils
 {
@@ -228,5 +229,28 @@ namespace werignac.Utils
 		}
 
 		#endregion GetSceneRoots
+
+
+		#region Async Timeout
+		public static async Task AwaitTimeout(Task task, int timeout, string context)
+		{
+			// TODO: Use timeouts when a certain flag is present in runtime settings.
+			Task returnedTask = await Task.WhenAny(task, Task.Delay(timeout));
+
+			if (returnedTask != task)
+				throw new System.Exception($"Timeout after {timeout / 1000} seconds when trying to {context}.");
+		}
+
+		public static async Task<T> AwaitTimeout<T>(Task<T> task, int timeout, string context)
+		{
+			// TODO: Use timeouts when a certain flag is present in runtime settings.
+			Task returnedTask = await Task.WhenAny(task, Task.Delay(timeout));
+
+			if (returnedTask != task)
+				throw new System.Exception($"Timeout after {timeout / 1000} seconds when trying to {context}.");
+
+			return task.Result;
+		}
+		#endregion
 	}
 }

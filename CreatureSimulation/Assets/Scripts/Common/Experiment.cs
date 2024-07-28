@@ -189,6 +189,7 @@ namespace werignac.GeneticAlgorithm
 				}
 
 				numberOfCreaturesRead = noPipePopulationSize;
+				populationController.StartSimulations();
 			}
 
 

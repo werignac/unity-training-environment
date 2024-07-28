@@ -42,8 +42,10 @@ namespace werignac.GeneticAlgorithm
 			spines.Add(spine, spine.transform.localRotation);
 		}
 
-		public float Evaluate(GameObject creature)
+		public float Evaluate(GameObject creature, out bool terminateEarly)
 		{
+			terminateEarly = false;
+
 			creature.ForEach(this.EvaluateVelocity);
 			creature.ForEach(this.EvaluateSpine);
 

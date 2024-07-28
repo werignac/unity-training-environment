@@ -7,7 +7,7 @@ namespace werignac.GeneticAlgorithm
 	public interface IFitnessEvaluator
 	{
 		void Initialize(GameObject creature);
-		float Evaluate(GameObject creature);
+		float Evaluate(GameObject creature, out bool terminateEarly);
 		float GetScore();
 	}
 }

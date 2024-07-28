@@ -73,7 +73,7 @@ namespace werignac.GeneticAlgorithm.Dispatch
 		private bool useTestPipeName = true;
 
 		[SerializeField, Tooltip("The name of the pipe name to use for testing if useSetPipeName is true. Only available in-editor.")]
-		private string testPipeName = "PipeA";
+		private string testPipeName = "PipeB";
 #endif
 		public ParserStack ParserStack { get; private set; } = null;
 		private IParser<ParsedErrorWarning> errorWarningParser = null;
@@ -82,11 +82,16 @@ namespace werignac.GeneticAlgorithm.Dispatch
 		// Start is called before the first frame update
 		void Start()
 		{
-			// Override's Unity's SynchronizationContext with the default C# SynchronizationContext.
-			// This enables async functions to truely run in parallel, which is important for creatures
-			// who use individual pipes for communication.
-			SynchronizationContextSubsystem SyncSubsystem = SubsystemManagerComponent.Get().GetSubsystem<SynchronizationContextSubsystem>();
-			SyncSubsystem.SetSynchronizationContextType(SynchronizationContextSubsystem.SynchronizationContextType.C_SHARP);
+			SimulationSettings simSettings = SimulationSettings.GetOrCreateSettings();
+
+			if (simSettings.experimentNamesToScenes.ContainsValue(SceneManager.GetActiveScene().name))
+			{
+				// Override's Unity's SynchronizationContext with the default C# SynchronizationContext.
+				// This enables async functions to truely run in parallel, which is important for creatures
+				// who use individual pipes for communication.
+				SynchronizationContextSubsystem SyncSubsystem = SubsystemManagerComponent.Get().GetSubsystem<SynchronizationContextSubsystem>();
+				SyncSubsystem.SetSynchronizationContextType(SynchronizationContextSubsystem.SynchronizationContextType.C_SHARP);
+			}
 
 			if (SceneManager.GetActiveScene().name != "Dispatcher")
 			{
