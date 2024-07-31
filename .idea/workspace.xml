@@ -5,27 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e854dc44-5fa2-4a5c-8c10-3aec83617281" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/training_cart_pole.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/CreatureEvolution.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/CreatureEvolution.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/other.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/InitTestScene638551290216740678.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/InitTestScene638551296156627642.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Resources/Settings/SimulatorSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Resources/Settings/SimulatorSettings.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Dispatcher.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Dispatcher.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Experiment.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Experiment.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/HighVelocityEvaluation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/HighVelocityEvaluation.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/IFitnessEvaluator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/IFitnessEvaluator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/StandingEvaluator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/StandingEvaluator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/StraightLineEvaluator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/StraightLineEvaluator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/SimulationSessionController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/SimulationSessionController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Utils/WerignacUtils.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Utils/WerignacUtils.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/CrawlerComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/CrawlerComponent.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/DynamicsManager.asset" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/DynamicsManager.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Prefabs/Simulation Sessions/CartPoleDemo.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Prefabs/Simulation Sessions/CartPoleDemo.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scenes/Demos/CartPoleDemo.unity" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scenes/Demos/CartPoleDemo.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/Demo/CartPoleDemo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/Demo/CartPoleDemo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/Demo/OnnxAgentCartPoleInput.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/Demo/OnnxAgentCartPoleInput.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/EditorBuildSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/EditorBuildSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/cart_pole_agent.onnx" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -92,6 +78,8 @@
       <workItem from="1722134058458" duration="2761000" />
       <workItem from="1722194960688" duration="1490000" />
       <workItem from="1722196829597" duration="2040000" />
+      <workItem from="1722285803789" duration="604000" />
+      <workItem from="1722288301313" duration="11000" />
     </task>
     <servers />
   </component>

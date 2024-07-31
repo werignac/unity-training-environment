@@ -11,40 +11,23 @@ namespace werignac.CartPole
 		[SerializeField]
 		private GameObject demoPrefab;
 
-		private CartPoleSessionController activeSession = null;
-
-		private RandomCartPole generator = new RandomCartPole();
+		private GameObject activeSessionGO = null;
 
 		void Start()
         {
-			SubsystemManagerComponent Subsystems = SubsystemManagerComponent.Get();
-
-			Subsystems.GetSubsystem<PhysicsUpdateSubsystem>().SetFixedDeltaTime();
-			Subsystems.GetSubsystem<SynchronizationContextSubsystem>().SetSynchronizationContextType(SynchronizationContextSubsystem.SynchronizationContextType.C_SHARP);
-
 			CreateNewSession();
         }
 
-		private void FixedUpdate()
-		{
-			activeSession.SimulateStep();
-			activeSession.SimulateStepAsync().Wait();
-			activeSession.PostAsyncStep();
-
-			if (activeSession.GetHasFinished())
-				CreateNewSession();
-		}
-
 		private void CreateNewSession()
 		{
-			if (activeSession != null)
+			if (activeSessionGO != null)
 			{
-				Destroy(activeSession.gameObject);
+				Destroy(activeSessionGO);
 			}
 
-			GameObject _activeObject = Instantiate(demoPrefab);
-			activeSession = demoPrefab.GetComponent<CartPoleSessionController>();
-			activeSession.Initialize(generator.GenerateRandomData(0));
+			activeSessionGO = Instantiate(demoPrefab);
+			CartPoleDemoSession session = activeSessionGO.GetComponent<CartPoleDemoSession>();
+			session.onSessionTerminate.AddListener(CreateNewSession);
 		}
 		
 	}
