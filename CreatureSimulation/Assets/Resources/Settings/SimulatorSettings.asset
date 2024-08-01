@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   experimentNamesToScenes:
     _serializedList:
+    - Key: cart_pole_3d
+      Value: CartPole3D
     - Key: cart_pole
       Value: CartPole
     - Key: falling_rectangular_prism

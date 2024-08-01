@@ -12,7 +12,6 @@ namespace werignac.CartPole
 	{
 		public MultiplexedParserToSubParsers<JsonParser<CartPoleCommand>> Multiplexer { get; private set; } = new MultiplexedParserToSubParsers<JsonParser<CartPoleCommand>>();
 
-
 		protected override CartPoleInitializationData SerializedToInitData(int index, DeserializedCartPoleInitializationData serializedInit)
 		{
 			return new CartPoleInitializationData(index, serializedInit);

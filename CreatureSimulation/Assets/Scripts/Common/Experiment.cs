@@ -190,15 +190,14 @@ namespace werignac.GeneticAlgorithm
 
 				numberOfCreaturesRead = noPipePopulationSize;
 				populationController.StartSimulations();
-			}
-
 
 #if UNITY_EDITOR
-			if (breakAfterReadCreatures)
-			{
-				Debug.Break();
-			}
+				if (breakAfterReadCreatures)
+				{
+					Debug.Break();
+				}
 #endif
+			}
 		}
 
 		/// <summary>
@@ -223,6 +222,13 @@ namespace werignac.GeneticAlgorithm
 				parserStack = null;
 				jsonParser = null;
 				OnFinishedReadingCreatures.Invoke();
+
+#if UNITY_EDITOR
+				if (breakAfterReadCreatures)
+				{
+					Debug.Break();
+				}
+#endif
 			}
 		}
 

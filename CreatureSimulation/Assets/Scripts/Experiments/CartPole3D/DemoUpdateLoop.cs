@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using werignac.GeneticAlgorithm;
+using werignac.Subsystem;
+using werignac.GeneticAlgorithm.Subsystems;
 
 namespace werignac.CartPole3D
 {
@@ -11,21 +13,20 @@ namespace werignac.CartPole3D
 	/// </summary>
     public class DemoUpdateLoop : MonoBehaviour
     {
+		private SimulationSessionController<CartPole3DInitializationData> simSess;
+
 		private void Awake()
 		{
-			GetComponent<IFitnessEvaluator>().Initialize(gameObject);
-			GetComponent<CartPole3DInitialImpulse>().Initialize(Random.Range(1, 1000));
-			GetComponent<CartPole3DGoalGenerator>().Initialize(Random.Range(1, 1000));
+			simSess = GetComponent<SimulationSessionController<CartPole3DInitializationData>>();
+			simSess.Initialize(new RandomCartPole3D().GenerateRandomData(0));
+			SubsystemManagerComponent.Get().GetSubsystem<SynchronizationContextSubsystem>().SetSynchronizationContextType(SynchronizationContextSubsystem.SynchronizationContextType.C_SHARP);
 		}
 
 		private void FixedUpdate()
 		{
-			BroadcastMessage("OnSimulateStep", Time.fixedDeltaTime);
-			BroadcastMessage("OnPostSimulateStepAsync", Time.fixedDeltaTime);
-			float score = GetComponent<IFitnessEvaluator>().Evaluate(gameObject, out bool terminateEarly);
-
-			Debug.Log($"Score: {score}");
-			Debug.Log($"Terminate Early: {terminateEarly}");
+			simSess.SimulateStep();
+			simSess.SimulateStepAsync().Wait();
+			simSess.PostAsyncStep();
 		}
 	}
 }

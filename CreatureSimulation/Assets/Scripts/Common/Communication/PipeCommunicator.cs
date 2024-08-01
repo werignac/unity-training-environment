@@ -126,7 +126,8 @@ namespace werignac.Communication
 			endReadThreadSignal.Set();
 
 			// Wait for read thread to finish.
-			Task.WaitAll(endReadWaitThread, readThread);
+			if (!Task.WaitAll(new Task[] { endReadWaitThread, readThread }, 5000))
+				Debug.LogWarning("Failed to close PipeCommunicator.");
 
 			try
 			{

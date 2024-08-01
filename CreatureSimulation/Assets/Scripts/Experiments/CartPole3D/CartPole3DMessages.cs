@@ -1,9 +1,43 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using werignac.GeneticAlgorithm;
 
 namespace werignac.CartPole3D
 {
+	public struct DeserializedCartPole3DInitializationData
+	{
+		public int GoalGeneratorSeed { get; set; }
+		public int InitialImpulseSeed { get; set; }
+	}
+
+	public class CartPole3DInitializationData : SimulationInitializationData
+	{
+		public CartPole3DInitializationData(int i) : base(i) { }
+
+		public CartPole3DInitializationData(int i, DeserializedCartPole3DInitializationData data) : base(i)
+		{
+			GoalGeneratorSeed = data.GoalGeneratorSeed;
+			InitialImpulseSeed = data.InitialImpulseSeed;
+		}
+
+		public int GoalGeneratorSeed { get; private set; }
+
+		public int InitialImpulseSeed { get; private set; }
+	}
+
+	public class RandomCartPole3D : RandomSimulationInitializationDataFactory<CartPole3DInitializationData>
+	{
+		public CartPole3DInitializationData GenerateRandomData(int i)
+		{
+			DeserializedCartPole3DInitializationData deserializedData = new DeserializedCartPole3DInitializationData();
+			deserializedData.GoalGeneratorSeed = Random.Range(1, 1000);
+			deserializedData.InitialImpulseSeed = Random.Range(1, 1000);
+
+			return new CartPole3DInitializationData(i, deserializedData);
+		}
+	}
+
 	public struct CartPole3DState
 	{
 		public CartPole3DState(CartPole3D cartPole)

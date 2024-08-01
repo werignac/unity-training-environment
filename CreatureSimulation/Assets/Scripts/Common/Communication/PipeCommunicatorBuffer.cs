@@ -149,7 +149,8 @@ namespace werignac.Communication
 		public void Close()
 		{
 			closeEvent.Set();
-			Task.WaitAll(closeWaitThread, bufferLoopThread);
+			if (!Task.WaitAll(new Task[] { closeWaitThread, bufferLoopThread }, 5000))
+				Debug.LogWarning("Failed to close communication buffer.");
 		}
 
 		/// <summary>

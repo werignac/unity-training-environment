@@ -366,8 +366,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   overrideRealtime: 0
-  readCreatureOnStart: 1
-  breakAfterReadCreatures: 0
+  readCreatureOnStart: 0
+  breakAfterReadCreatures: 1
 --- !u!114 &1901938780
 MonoBehaviour:
   m_ObjectHideFlags: 0
