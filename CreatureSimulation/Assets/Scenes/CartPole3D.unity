@@ -135,7 +135,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &63267876
 Transform:
   m_ObjectHideFlags: 0
@@ -231,7 +231,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 715ab66222a95114a9a7aa2fca391152, type: 2}
+  - {fileID: 2100000, guid: 93104bca61be7734cb373d99799f17a8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -303,7 +303,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 645228327}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 24ad236c755d52f40833b8188c488dc5, type: 3}
+  m_Script: {fileID: 11500000, guid: 275f95b496bad4a46898d53dfc59d196, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   populationController: {fileID: 645228332}
@@ -322,7 +322,7 @@ MonoBehaviour:
       m_Calls: []
   overrideRealtime: 0
   readCreatureOnStart: 0
-  breakAfterReadCreatures: 1
+  breakAfterReadCreatures: 0
 --- !u!114 &645228332
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -332,10 +332,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 645228327}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb309021662845b4cb01a96cdfbc3bdf, type: 3}
+  m_Script: {fileID: 11500000, guid: 3869a4f8146b8d04495fd52d6fd49c67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  simulationSessionPrefab: {fileID: 2341733537282625076, guid: 27c3c2327b5d8744ba0534b1acaa0b83, type: 3}
+  simulationSessionPrefab: {fileID: 2341733537282625076, guid: c44087245b172f54d92ba91c1d623436, type: 3}
   sessionLayers:
   - Session 0
   - Session 1

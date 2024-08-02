@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e854dc44-5fa2-4a5c-8c10-3aec83617281" name="Changes" comment="" />
+    <list default="true" id="e854dc44-5fa2-4a5c-8c10-3aec83617281" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Prefabs/Simulation Sessions/CartPole3DSession.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Prefabs/Simulation Sessions/CartPole3DSession.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scenes/CartPole3D.unity" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scenes/CartPole3D.unity" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -21,25 +25,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "D:/SoloProjects/CreatureEvolution/src/falling_rectangular_prism.py",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/SoloProjects/CreatureEvolution/src/falling_rectangular_prism.py&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\SoloProjects\CreatureEvolution\src" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.training_cart_pole">
+  <component name="RunManager" selected="Python.training_cart_pole_3d">
     <configuration name="falling_rectangular_prism" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="CreatureEvolution" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -128,6 +132,7 @@
       <workItem from="1722288301313" duration="11000" />
       <workItem from="1722462206013" duration="1204000" />
       <workItem from="1722533799783" duration="4171000" />
+      <workItem from="1722572901863" duration="1054000" />
     </task>
     <servers />
   </component>
@@ -163,7 +168,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole.coverage" NAME="training_cart_pole Coverage Results" MODIFIED="1722537444265" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
-    <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole_3d.coverage" NAME="training_cart_pole_3d Coverage Results" MODIFIED="1722536091286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole_3d.coverage" NAME="training_cart_pole_3d Coverage Results" MODIFIED="1722573783611" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/CreatureEvolution$falling_rectangular_prism.coverage" NAME="falling_rectangular_prism Coverage Results" MODIFIED="1722537113263" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
   </component>
 </project>
