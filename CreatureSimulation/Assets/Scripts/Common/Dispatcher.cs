@@ -84,7 +84,9 @@ namespace werignac.GeneticAlgorithm.Dispatch
 		{
 			SimulationSettings simSettings = SimulationSettings.GetOrCreateSettings();
 
-			if (simSettings.experimentNamesToScenes.ContainsValue(SceneManager.GetActiveScene().name))
+			bool inDispatcherScene = SceneManager.GetActiveScene().name == "Dispatcher";
+
+			if (inDispatcherScene || simSettings.experimentNamesToScenes.ContainsValue(SceneManager.GetActiveScene().name))
 			{
 				// Override's Unity's SynchronizationContext with the default C# SynchronizationContext.
 				// This enables async functions to truely run in parallel, which is important for creatures
@@ -93,7 +95,7 @@ namespace werignac.GeneticAlgorithm.Dispatch
 				SyncSubsystem.SetSynchronizationContextType(SynchronizationContextSubsystem.SynchronizationContextType.C_SHARP);
 			}
 
-			if (SceneManager.GetActiveScene().name != "Dispatcher")
+			if (! inDispatcherScene)
 			{
 				DestroyImmediate(this);
 				return;

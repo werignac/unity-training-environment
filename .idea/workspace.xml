@@ -5,27 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e854dc44-5fa2-4a5c-8c10-3aec83617281" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/training_cart_pole.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.name" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/CreatureEvolution.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/CreatureEvolution.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/other.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/InitTestScene638551290216740678.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/InitTestScene638551296156627642.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Resources/Settings/SimulatorSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Resources/Settings/SimulatorSettings.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Dispatcher.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Dispatcher.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Experiment.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Experiment.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/HighVelocityEvaluation.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/HighVelocityEvaluation.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/IFitnessEvaluator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/IFitnessEvaluator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/StandingEvaluator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/StandingEvaluator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/StraightLineEvaluator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/StraightLineEvaluator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/SimulationSessionController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/SimulationSessionController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Utils/WerignacUtils.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Utils/WerignacUtils.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/CrawlerComponent.cs" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/CrawlerComponent.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/DynamicsManager.asset" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/DynamicsManager.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/EditorBuildSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/EditorBuildSettings.asset" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,7 +51,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/training_cart_pole.py" />
-      <option name="PARAMETERS" value="-stats 1 -display" />
+      <option name="PARAMETERS" value="-t -stats 1" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -111,5 +91,6 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole.coverage" NAME="training_cart_pole Coverage Results" MODIFIED="1722199056836" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/main_py$two_part_crawling_creature.coverage" NAME="two_part_crawling_creature Coverage Results" MODIFIED="1722538687929" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
   </component>
 </project>
