@@ -1,25 +1,57 @@
+"""
+@author William Erignac
+@version 2024-09-02
+
+This script runs the 3d cart pole experiment in Unity and uses a gradient descent algorithm on a neural net to learn
+a cart pole controller that maximizes its score for the experiment.
+
+Much of the neural net architecture and gradient descent code is from the first example for cart pole in "Deep
+Reinforcement Learning In Action" by Zai, Alexander and Brown, Brandon (pg 106-108).
+
+For more information, check the the Deep Reinforcement Learning In Action repo:
+https://github.com/DeepReinforcementLearning/DeepReinforcementLearningInAction
+
+MIT License
+
+Copyright (c) 2018 DeepReinforcementLearning
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import argparse
 import json
 import os
-import win32file, win32pipe, win32event, pywintypes
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import threading
 import multiprocessing
 import torch
-import torch.nn as nn
-import torch.functional as F
 from tqdm import tqdm
 
-from simulation_instance import SimulationInstance
+from unity_instance import UnityInstance
 
 #region Statics
 
 PIPE_PATH = '\\\\.\\pipe\\'
 PIPE_NAME = "PipeB"
-SIMULATOR_PATH = "../CreatureSimulation/Builds/2024-07-27_00-46/CreatureSimulation.exe"
+SIMULATOR_PATH = os.environ["UNITY_SIMULATOR_PATH"]
 DISPLAY_SIMULATOR_ARGS = ["-p", PIPE_NAME]
 SIMULATOR_ARGS = ["-batchmode", "-nographics"] + DISPLAY_SIMULATOR_ARGS
 CREATURE_PIPE_PREFIX = "Pipe"
@@ -28,15 +60,18 @@ CREATURE_PIPE_PREFIX = "Pipe"
 
 #region Neural Net
 
-l1 = 4 #A
-l2 = 150
-l3 = 2 #B
+l1 = 2
+l2_1 = 32
+l2_2 = 32
+l3 = 4
 
 model = torch.nn.Sequential(
-    torch.nn.Linear(l1, l2),
+    torch.nn.Linear(l1, l2_1),
     torch.nn.LeakyReLU(),
-    torch.nn.Linear(l2, l3),
-    torch.nn.Softmax(dim=0) #C
+    torch.nn.Linear(l2_1, l2_2),
+    torch.nn.LeakyReLU(),
+    torch.nn.Linear(l2_2, l3),
+    torch.nn.Softmax(dim=0)
 )
 
 learning_rate = 0.009
@@ -59,7 +94,7 @@ def loss_fn(preds, r): #A
 
 class CartPoleData:
     def __init__(self):
-        self.goal_generator_seed = np.random.randint(1, 1000)
+        self.goal_generator_seed = 2#np.random.randint(1, 1000)
         self.initial_impulse_seed = np.random.randint(1, 1000)
 
     def serialize(self):
@@ -70,12 +105,12 @@ class CartPoleData:
 
 #region Running Simulation
 
-def execute_epoch(organisms, sim_inst: SimulationInstance):
+def execute_epoch(organisms, sim_inst: UnityInstance):
     # Send the creature initialization data.
     serialize_v = np.vectorize(lambda c: json.dumps(c.serialize()))
     serializations = serialize_v(organisms["Creature"].to_numpy())
-    sim_inst.send_creatures(serializations)
-    sim_inst.end_send_creatures()
+    sim_inst.send_session_initialization_data(serializations)
+    sim_inst.end_send_session_initialization_data()
     # Read the responses from the simulator and process them
     # this includes starting new creatures, reporting the final
     # scores of creatures, and data about the initial state of creatures.
@@ -87,7 +122,7 @@ def execute_epoch(organisms, sim_inst: SimulationInstance):
     return sorted_organisms
 
 
-def read_simulator_responses(organisms: pd.DataFrame, sim_inst: SimulationInstance):
+def read_simulator_responses(organisms: pd.DataFrame, sim_inst: UnityInstance):
 
     """
     Mapping of creature indexes to running brains. The brains take in simulation frame
@@ -153,57 +188,57 @@ class CreatureBrain:
         be sent.
         """
 
-        print(frame_data)
-
-        """
         self._data_count += 1
         input, score = CreatureBrain._extract_frame_data(frame_data)
 
         act_prob = model(torch.from_numpy(input).float())
-        action = np.random.choice(np.array([0, 1]), p=act_prob.data.numpy())
+        action = np.random.choice(range(4), p=act_prob.data.numpy())
 
         if not self.last_state_action is None:
             self.transitions += [(self.last_state_action[0], self.last_state_action[1], score)]
 
         self.last_state_action = input, action
-        """
 
-        return json.dumps({'DriveX': 1.0, 'DriveZ': 0.5})
+        action_command = [(0, 0), (0, 1), (1, 0), (1, 1)][action]
+
+        return json.dumps({'DriveX': float(action_command[0]), 'DriveZ': float(action_command[1])})
 
     @staticmethod
-    def _extract_frame_data(data) -> tuple:
-        return np.array([
-            data['CartPosition'],
-            data['CartVelocity'],
-            data['PoleAngle'],
-            data['PoleAngularVelocity']
-        ]), data['Score']
+    def _extract_frame_data(data: dict) -> tuple:
+
+        velocity_difference_x: float = data['Goal']['CartVelocityX'] - data['State']['CartVelocityX']
+        velocity_difference_z: float = data['Goal']['CartVelocityZ'] - data['State']['CartVelocityZ']
+
+        data_list = []
+        data_list.extend(data['State'].values())
+        data_list.extend(data['Goal'].values())
+        data_list.extend((velocity_difference_x, velocity_difference_z))
+        data_list[:-2] = [0] * (len(data_list) - 2) # Clear to help learn follow goal.
+
+        # np.array(data_list)
+        return np.array((velocity_difference_x, velocity_difference_z)), data['Score']
 
     def on_session_end(self):
-        """
-        ep_len = len(self.transitions)  # I
-        scores.append(ep_len)
-        reward_batch = torch.Tensor([r for (s, a, r) in self.transitions]).flip(dims=(0,))  # J
+        scores.append(self.transitions[-1][2])
+        reward_batch = torch.Tensor(np.array([r for (s, a, r) in self.transitions])).flip(dims=(0,))  # J
         disc_returns = discount_rewards(reward_batch)  # K
-        state_batch = torch.Tensor([s for (s, a, r) in self.transitions])  # L
-        action_batch = torch.Tensor([a for (s, a, r) in self.transitions])  # M
+        state_batch = torch.Tensor(np.array([s for (s, a, r) in self.transitions]))  # L
+        action_batch = torch.Tensor(np.array([a for (s, a, r) in self.transitions]))  # M
         pred_batch = model(state_batch)  # N
         prob_batch = pred_batch.gather(dim=1, index=action_batch.long().view(-1, 1)).squeeze()  # O
         loss = loss_fn(prob_batch, disc_returns)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        """
 
 #endregion Brain Control
 
 def save_onnx():
-    """
-    random_input = torch.rand((4,), dtype=torch.float32)
-    filename = f'cart_pole_agent.onnx'
+    random_input = torch.rand((l1,), dtype=torch.float32)
+    filename = f'cart_pole_3d_agent.onnx'
     torch.onnx.export(model, random_input, filename, input_names=['input'], output_names=['output'])
     return filename
-    """
+
 
 def display_performance():
     display_exec_args = dict()
@@ -211,7 +246,7 @@ def display_performance():
     display_exec_args["simulator_args"] = DISPLAY_SIMULATOR_ARGS
 
     if RUN_EXECUTABLE:
-        display_sim_inst = SimulationInstance(os.path.join(PIPE_PATH, PIPE_NAME), display_exec_args, no_timeout=True)
+        display_sim_inst = UnityInstance(os.path.join(PIPE_PATH, PIPE_NAME), display_exec_args, no_timeout=True)
     else:
         display_sim_inst = sim_inst
 
@@ -241,8 +276,9 @@ if __name__ == "__main__":
     STATS = args.stats
 
     # Create an initial population
+    ORGANISM_COUNT = 256
     organisms = pd.DataFrame(columns=["Creature", "Score"])
-    for i in range(256):
+    for i in range(ORGANISM_COUNT):
         organisms.loc[len(organisms.index)] = [CartPoleData(), float(0)]
 
     if STATS > 0:
@@ -251,8 +287,8 @@ if __name__ == "__main__":
     exec_args = dict()
     exec_args["simulator_path"] = SIMULATOR_PATH
     exec_args["simulator_args"] = SIMULATOR_ARGS
-    sim_inst = SimulationInstance(os.path.join(PIPE_PATH, PIPE_NAME), exec_args if RUN_EXECUTABLE else None,
-                                  no_timeout=True)
+    sim_inst = UnityInstance(os.path.join(PIPE_PATH, PIPE_NAME), exec_args if RUN_EXECUTABLE else None,
+                              no_timeout=True)
 
     for i in range(EPOCH_COUNT):
         print(f"\nEpoch {i + 1}")
@@ -261,8 +297,6 @@ if __name__ == "__main__":
         if STATS > 0:
             avg_performance_per_epoch.append(np.mean(organisms.head(10)["Score"]))
 
-    sim_inst.quit()
-
     save_onnx()
 
     if STATS > 0:
@@ -270,10 +304,14 @@ if __name__ == "__main__":
         plt.title(f"Performance over Epochs")
         plt.ylabel(f"Score")
         plt.xlabel(f"Epoch (first epoch at 1)")
-        plt.plot(np.arange(1, 256 + 1, 1), scores)
+        plt.plot(np.arange(1, ORGANISM_COUNT + 1, 1), scores)
         ax.grid()
 
         plt.show()
 
     if DISPLAY_PERFORMANCE:
+        if RUN_EXECUTABLE:
+            sim_inst.quit()
         display_performance()
+    else:
+        sim_inst.quit()

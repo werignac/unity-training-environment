@@ -1,21 +1,25 @@
+"""
+@author William Erignac
+@version 2024-09-02
+
+This script runs an in-progress two-part crawling creature experiment in Unity.
+"""
 import argparse
 import json
 import os
-import win32file, win32pipe, win32event, pywintypes
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import threading
 import multiprocessing
 
-from simulation_instance import SimulationInstance
+from unity_instance import UnityInstance
 
 #region Statics
 
 PIPE_PATH = '\\\\.\\pipe\\'
 PIPE_NAME = "PipeA"
-SIMULATOR_PATH = "../CreatureSimulation/Builds/2024-06-30_16-43/CreatureSimulation.exe"
+SIMULATOR_PATH = os.environ["UNITY_SIMULATOR_PATH"]
 SIMULATOR_ARGS = ["-batchmode", "-nographics", "-p", PIPE_NAME]
 CREATURE_PIPE_PREFIX = "Pipe"
 
@@ -60,12 +64,12 @@ class CrawlerData:
 
 #region Running Simulation
 
-def execute_epoch(organisms, sim_inst: SimulationInstance):
+def execute_epoch(organisms, sim_inst: UnityInstance):
     # Send the creature initialization data.
     serialize_v = np.vectorize(lambda c: json.dumps(c.serialize()))
     serializations = serialize_v(organisms["Creature"].to_numpy())
-    sim_inst.send_creatures(serializations)
-    sim_inst.end_send_creatures()
+    sim_inst.send_session_initialization_data(serializations)
+    sim_inst.end_send_session_initialization_data()
     # Read the responses from the simulator and process them
     # this includes starting new creatures, reporting the final
     # scores of creatures, and data about the initial state of creatures.
@@ -77,7 +81,7 @@ def execute_epoch(organisms, sim_inst: SimulationInstance):
     return sorted_organisms
 
 
-def read_simulator_responses(organisms: pd.DataFrame, sim_inst: SimulationInstance):
+def read_simulator_responses(organisms: pd.DataFrame, sim_inst: UnityInstance):
 
     """
     Mapping of creature indexes to running brains. The brains take in simulation frame
@@ -192,8 +196,8 @@ if __name__ == "__main__":
     exec_args = dict()
     exec_args["simulator_path"] = SIMULATOR_PATH
     exec_args["simulator_args"] = SIMULATOR_ARGS
-    sim_inst = SimulationInstance(os.path.join(PIPE_PATH, PIPE_NAME), exec_args if RUN_EXECUTABLE else None,
-                                  no_timeout=True)
+    sim_inst = UnityInstance(os.path.join(PIPE_PATH, PIPE_NAME), exec_args if RUN_EXECUTABLE else None,
+                              no_timeout=True)
 
     for i in range(EPOCH_COUNT):
         print(f"\nEpoch {i + 1}")
