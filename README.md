@@ -11,7 +11,7 @@ Currently, there is a Cart Pole project showcasing an agent trained using this f
 To see the Cart Pole agent in action, please check out this project on [itch.io](https://werignac.itch.io/unity-reinforcement-learning-cart-pole).
 
 ## Setup
-The following are instructions to run the provided Python scripts:
+The following are instructions to run the Python scripts in src:
 1. Open the Unity project in UnityRLEnvironment.
 2. Set Player Settings > Physics > Simulation Mode to Script.
 3. Open the Build settings.
@@ -19,7 +19,7 @@ The following are instructions to run the provided Python scripts:
 5. Create a build for Windows, and copy the path of the build.
 6. Create a virtual environment with the provided [requirements.txt](requirements.txt).
 7. Activate the virtual environment, and set the environment variable "UNITY_SIMULATOR_PATH" to the copied path of your build from step 5.
-8. Run your desired script.
+8. Run your desired script in src.
 
 To run in the Unity editor, instead of creating a build, ensure that testPipeName in [Dispatcher.cs](UnityRLEnvironment\Assets\Scripts\Common\Dispatcher.cs) matches the pipe name in the script you're running. Then, open and play the Dispatcher scene in Unity followed by running a Python script with -t as an argument. 
 
