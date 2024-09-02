@@ -1,0 +1,16 @@
+{
+    "name": "werignac.RLEnvironment.Subsystems",
+    "rootNamespace": "werignac.RLEnvironment.Subsystems",
+    "references": [
+        "GUID:b6b21656ef910084483bf0ff095a5b61"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

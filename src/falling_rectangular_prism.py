@@ -1,3 +1,11 @@
+"""
+@author William Erignac
+@version 2024-09-02
+
+This script runs the falling rectangular prism experiment in Unity and uses a genetic algorithm to learn the dimensions
+and initial rotation of a prism that result in movement for the longest amount of time.
+"""
+
 import numpy as np
 import numpy.random
 import pandas as pd
@@ -6,21 +14,30 @@ import matplotlib.pyplot as plt
 import json
 import argparse
 import os
-from simulation_instance import SimulationInstance
+from unity_instance import UnityInstance
 
 PIPE_PATH = '\\\\.\\pipe\\'
-PIPE_NAME = "PipeA"
-SIMULATOR_PATH = "../CreatureSimulation/Builds/03-07-2024_00-51/CreatureSimulation.exe"
+PIPE_NAME = "PipeB"
+SIMULATOR_PATH = os.environ["UNITY_SIMULATOR_PATH"]
 SIMULATOR_ARGS = ["-batchmode", "-nographics", "-p", PIPE_NAME]
 
 #region Genetic Algorithm
 
 class RectPrism:
+    """
+    The scale and euler rotation of a rectangular prism.
+    """
     def __init__(self, scale_vector=None, rotation_vector=None):
+        """
+        Can be initialized with Nones for random scales and rotations.
+        """
         self.scale = np.random.random(3) if scale_vector is None else scale_vector
         self.rotation = np.random.random(3) * 90 if rotation_vector is None else rotation_vector
 
     def serialize(self):
+        """
+        Convert this object to a dict to be serialized into a json string.
+        """
         return {"XScale": self.scale[0], "YScale": self.scale[1], "ZScale": self.scale[2],
                 "XRot": self.rotation[0], "YRot": self.rotation[1], "ZRot": self.rotation[2]}
 
@@ -28,6 +45,10 @@ class RectPrism:
         return f"Location: <{self.scale}>, Rotation: <{self.rotation}>"
 
     def sexual_mutation(self, other) -> object:
+        """
+        Create a new RectPrism by combining the genes of this
+        prism and another prism.
+        """
         scale = np.empty(3, dtype=float)
         for i in range(scale.shape[0]):
             scale[i] = np.random.choice([self.scale[i], other.scale[i]])
@@ -37,13 +58,19 @@ class RectPrism:
         return RectPrism(scale, rotation)
 
     def asexual_mutation(self, switch_chance=0.3, modify_chance=0.6):
+        """
+        Create a new RectPrism by mutating the genes of this
+        prim.
+        """
         scale = np.copy(self.scale)
         rotation = np.copy(self.rotation)
         attributes = [scale, rotation]
         while random.random() < modify_chance:
+            # Multiply either scale or rotation by a random amount from 0.9 - 1.1.
             attribute = attributes[np.random.randint(0, len(attributes) - 1)]
             attribute[np.random.randint(0, 2)] *= np.random.rand() * 0.2 + 0.9
         while random.random() < switch_chance:
+            # Switch the values of two attributes randomly.
             attribute_1 = attributes[np.random.randint(0, len(attributes) - 1)]
             index_1 = np.random.randint(0, 2)
             attribute_2 = attributes[np.random.randint(0, len(attributes) - 1)]
@@ -55,6 +82,9 @@ class RectPrism:
 
 
 def reproduction(scored_organisms: pd.DataFrame, new_population_count=None, sexual_to_asexual_percent=0.5):
+    """
+    Create a new mutated population, with successful prisms being more likely to reproduce.
+    """
     scored_organisms = scored_organisms.sort_values("Score", ascending=False)
 
     if new_population_count is None:
@@ -86,14 +116,17 @@ def reproduction(scored_organisms: pd.DataFrame, new_population_count=None, sexu
 #endregion
 
 #region Running Simulation
-def execute_epoch(organisms, sim_inst: SimulationInstance):
+def execute_epoch(organisms, sim_inst: UnityInstance):
+    """
+    Simulate a population of rectangular prisms and record their scores.
+    """
 
     serialize_v = np.vectorize(lambda c: json.dumps(c.serialize()))
 
     serializations = serialize_v(organisms["Creature"].to_numpy())
 
-    sim_inst.send_creatures(serializations)
-    sim_inst.end_send_creatures()
+    sim_inst.send_session_initialization_data(serializations)
+    sim_inst.end_send_session_initialization_data()
 
     while True:
         line = sim_inst.read_line()
@@ -109,9 +142,7 @@ def execute_epoch(organisms, sim_inst: SimulationInstance):
         index = int(line_split[0])
         score = float(line_split[1])
 
-        row = organisms.loc[index]
-        row["Score"] = score
-        organisms.loc[index] = row
+        organisms.loc[index, "Score"] = score
 
     sorted_organisms = organisms.sort_values("Score", ascending=False)
 
@@ -121,6 +152,10 @@ def execute_epoch(organisms, sim_inst: SimulationInstance):
 
 
 def display_performers(best_performers):
+    """
+    Show the best-performing rectangular prisms.
+    """
+
     args = SIMULATOR_ARGS.copy()
     if "-batchmode" in args:
         args.remove("-batchmode")
@@ -130,13 +165,13 @@ def display_performers(best_performers):
     exec_args = dict()
     exec_args["simulator_path"] = SIMULATOR_PATH
     exec_args["simulator_args"] = args
-    sim_inst = SimulationInstance(os.path.join(PIPE_PATH, PIPE_NAME), exec_args)
+    sim_inst = UnityInstance(os.path.join(PIPE_PATH, PIPE_NAME), exec_args)
 
     for performer in best_performers:
         sim_inst.run_experiment("falling_rectangular_prism")
 
-        sim_inst.send_creatures(json.dumps(performer.serialize()))
-        sim_inst.end_send_creatures()
+        sim_inst.send_session_initialization_data(json.dumps(performer.serialize()))
+        sim_inst.end_send_session_initialization_data()
 
         while not (sim_inst.read_line() is None):
             pass
@@ -160,28 +195,32 @@ if __name__ == "__main__":
 
     # Create an initial population
     organisms = pd.DataFrame(columns=["Creature", "Score"])
-    for i in range(256):
+    for i in range(64):
         organisms.loc[len(organisms.index)] = [RectPrism(), 0]
 
     if DISPLAY_BEST_PERFORMERS:
         best_performers = []
 
     if STATS > 0:
-        avg_performance_per_epoch = [0]
+        avg_performance_per_epoch = []
+    if STATS > 1:
+        best_performers_scores = []
 
     exec_args = dict()
     exec_args["simulator_path"] = SIMULATOR_PATH
     exec_args["simulator_args"] = SIMULATOR_ARGS
-    sim_inst = SimulationInstance(os.path.join(PIPE_PATH, PIPE_NAME), exec_args if RUN_EXECUTABLE else None)
+    sim_inst = UnityInstance(os.path.join(PIPE_PATH, PIPE_NAME), exec_args if RUN_EXECUTABLE else None)
 
     for i in range(EPOCH_COUNT):
         print(f"\nEpoch {i + 1}")
         sim_inst.run_experiment("falling_rectangular_prism")
-        execute_epoch(organisms, sim_inst)
+        organisms = execute_epoch(organisms, sim_inst)
         if DISPLAY_BEST_PERFORMERS:
-            best_performers.append(organisms.head(1)["Creature"][0])
+            best_performers.append(organisms.head(1)["Creature"].iloc[0])
         if STATS > 0:
-            avg_performance_per_epoch.append(np.mean(organisms.head(10)["Score"]))
+            avg_performance_per_epoch.append(np.mean(organisms["Score"]))
+        if STATS > 1:
+            best_performers_scores.append(np.mean(organisms.head(10)["Score"]))
         organisms = reproduction(organisms)
 
     sim_inst.quit()
@@ -194,7 +233,10 @@ if __name__ == "__main__":
         plt.title(f"Performance over Epochs")
         plt.ylabel(f"Score")
         plt.xlabel(f"Epoch (first epoch at 1)")
-        plt.plot(np.arange(0, EPOCH_COUNT + 1, 1), avg_performance_per_epoch)
+        plt.plot(np.arange(1, EPOCH_COUNT + 1, 1), avg_performance_per_epoch, label="Average Population Score")
+        if STATS > 1:
+            plt.plot(np.arange(1, EPOCH_COUNT + 1, 1), best_performers_scores, label="Top 10 Individuals Average Score")
+            plt.legend()
         ax.grid()
 
         plt.show()
