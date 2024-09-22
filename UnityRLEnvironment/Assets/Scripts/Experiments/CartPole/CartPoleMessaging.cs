@@ -48,24 +48,32 @@ namespace werignac.CartPole
 
 	public struct CartPoleState
 	{
-		public CartPoleState(float cartPosition, float cartVelocity, float poleAngle, float poleAngularVelocity, float score)
+		public CartPoleState(float cartPosition, float cartVelocity, float poleAngle, float poleAngularVelocity, float wind, float normalizedWind, float score)
 		{
 			CartPosition = cartPosition;
 			CartVelocity = cartVelocity;
 			PoleAngle = poleAngle;
 			PoleAngularVelocity = poleAngularVelocity;
+			Wind = wind;
+			NormalizedWind = normalizedWind;
 			Score = score;
 		}
 
-		public CartPoleState(GameObject creature, float score)
+		public CartPoleState(GameObject cartObj, float score)
 		{
-			ArticulationBody cart = creature.GetComponent<ArticulationBody>();
-			ArticulationBody pole = creature.transform.GetChild(1).GetComponent<ArticulationBody>();
+			ArticulationBody cart = cartObj.GetComponent<ArticulationBody>();
+			ArticulationBody pole = cartObj.transform.GetChild(1).GetComponent<ArticulationBody>();
 
 			CartPosition = cart.transform.position.z;
 			CartVelocity = cart.velocity.z;
 			PoleAngle = pole.jointPosition[0] * Mathf.Rad2Deg;
 			PoleAngularVelocity = pole.jointVelocity[0];
+
+			RandomWind _rWind = cartObj.GetComponentInParent<RandomWind>();
+
+			Wind = _rWind.GetWind();
+			NormalizedWind = _rWind.GetNormalizedWind();
+
 			Score = score;
 		}
 
@@ -73,6 +81,8 @@ namespace werignac.CartPole
 		public float CartVelocity { get; set; }
 		public float PoleAngle { get; set; }
 		public float PoleAngularVelocity { get; set; }
+		public float Wind { get; set; }
+		public float NormalizedWind { get; set; }
 		public float Score { get; set; }
 	}
 	

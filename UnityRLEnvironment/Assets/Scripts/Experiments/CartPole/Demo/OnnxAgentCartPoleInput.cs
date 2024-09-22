@@ -26,7 +26,7 @@ namespace werignac.CartPole
 
 		public virtual CartPoleCommand GetCommand(CartPoleState state)
 		{
-			float[] tensorData = new float[] { state.CartPosition, state.CartVelocity, state.PoleAngle, state.PoleAngularVelocity};
+			float[] tensorData = new float[] { state.CartPosition, state.CartVelocity, state.PoleAngle, state.PoleAngularVelocity, state.NormalizedWind};
 
 			Tensor input = new Tensor(1, 4, tensorData);
 

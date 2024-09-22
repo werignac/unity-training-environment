@@ -67,6 +67,7 @@ namespace werignac.CartPole.Demo
 				currentWind += -0.5f;
 			else
 				currentWind += 0.5f;
+			currentWind = Mathf.Clamp(currentWind, -1, 1);
 		}
 
 		public override void OnSimulateStep(float deltaTime)
@@ -88,6 +89,14 @@ namespace werignac.CartPole.Demo
 			{
 				base.OnSimulateStep(deltaTime);
 			}
+		}
+
+		public override float GetNormalizedWind()
+		{
+			if (usePlayerInput)
+				return currentWind;
+			else
+				return base.GetNormalizedWind();
 		}
 	}
 }

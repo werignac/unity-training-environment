@@ -59,7 +59,7 @@ CREATURE_PIPE_PREFIX = "Pipe"
 
 #region Neural Net
 
-l1 = 4
+l1 = 5
 l2 = 150
 l3 = 2
 
@@ -203,7 +203,8 @@ class AgentBrain:
             data['CartPosition'],
             data['CartVelocity'],
             data['PoleAngle'],
-            data['PoleAngularVelocity']
+            data['PoleAngularVelocity'],
+            data['NormalizedWind']
         ]), data['Score']
 
     def on_session_end(self):
@@ -230,7 +231,7 @@ def save_onnx():
     """
     Save the cart pole agent as an onnx file.
     """
-    random_input = torch.rand((4,), dtype=torch.float32)
+    random_input = torch.rand((l1,), dtype=torch.float32)
     filename = f'cart_pole_agent.onnx'
     torch.onnx.export(model, random_input, filename, input_names=['input'], output_names=['output'])
     return filename

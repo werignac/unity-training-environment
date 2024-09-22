@@ -35,10 +35,7 @@ namespace werignac.CartPole
 		public virtual void OnSimulateStep(float deltaTime)
 		{
 			windState += deltaTime * perlinStepMultiplier;
-			float windRand = Mathf.PerlinNoise1D(windState);
-
-			float normalizedWind = (0.5f - windRand) * 2;
-			SetWind(normalizedWind);
+			SetWind(GetNormalizedWind());
 		}
 
 		protected void SetWind(float normalizedWind)
@@ -47,6 +44,17 @@ namespace werignac.CartPole
 			pole.AddForce(Vector3.forward * wind);
 
 			onWindUpdate.Invoke(wind, normalizedWind);
+		}
+
+		public virtual float GetNormalizedWind()
+		{
+			float windRand = Mathf.PerlinNoise1D(windState);
+			return (0.5f - windRand) * 2;
+		}
+
+		public float GetWind()
+		{
+			return GetNormalizedWind() * maxForce;
 		}
 	}
 }

@@ -5,228 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e854dc44-5fa2-4a5c-8c10-3aec83617281" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/UnityRLEnvironment/AYellowpaper.SerializedCollections.Editor.csproj" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/UnityRLEnvironment/AYellowpaper.SerializedCollections.csproj" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assembly-CSharp-firstpass.csproj" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureEvolution.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureEvolution.sln" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureEvolution.vcxproj" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureEvolution.vcxproj.filters" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/.vsconfig" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Materials/Checker.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Materials/Floor.mat" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/NNs/CartPole/cart_pole_agent.onnx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/NuGet.config" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/AYellowpaper.SerializedCollections.Editor.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Assets/BurgerMenu@2x.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Assets/KeysGeneratorSelectorWindow.uss" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Assets/KeysGeneratorSelectorWindow.uxml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Data/ElementData.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Data/ElementSettings.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Data/PropertyData.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/DisplayType.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/KeyListGenerators/Implementors/EnumGenerator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/KeyListGenerators/Implementors/IntRangeGenerator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/KeyListGenerators/Implementors/IntSteppingGenerator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/KeyListGenerators/KeyListGenerator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/KeyListGenerators/KeyListGeneratorAttribute.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/KeyListGenerators/KeyListGeneratorCache.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/KeyListGenerators/KeyListGeneratorData.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/KeyListGenerators/KeyListGeneratorEditor.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/KeyListGenerators/KeyListGeneratorSelectorWindow.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/KeyListGenerators/ModificationType.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/PagingElement.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Search/Matchers/EnumMatcher.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Search/Matchers/Matcher.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Search/Matchers/Matchers.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Search/Matchers/NumericMatcher.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Search/Matchers/StringMatcher.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Search/PropertySearchResult.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Search/SearchQuery.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Search/SearchResultEntry.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/SerializedDictionaryDrawer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/SerializedDictionaryInstanceDrawer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Settings/EditorUserSettings.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Settings/EditorUserSettingsProvider.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/States/DefaultListState.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/States/ListState.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/States/SearchListState.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Utility/GUIEnabledScope.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Utility/LabelWidth.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Utility/RectUtility.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Utility/SCEditorUtility.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Editor/Scripts/Utility/SCEnumUtility.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Readme.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Runtime/AYellowpaper.SerializedCollections.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Runtime/LookupTables/DictionaryLookupTable.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Runtime/LookupTables/IKeyable.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Runtime/Scripts/AssemblyInfo.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Runtime/Scripts/SerializedCollectionsUtility.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Runtime/Scripts/SerializedDictionary.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Runtime/Scripts/SerializedDictionaryAttribute.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Runtime/Scripts/SerializedKeyValuePair.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Sample/SerializedDictionarySample.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Sample/SerializedDictionarySample.prefab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Sample/SerializedDictionarySample.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Sample/SerializedDictionarySampleThree.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Plugins/SerializedCollections/Sample/SerializedDictionarySampleTwo.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Prefabs/Simulation Sessions/BodyPart.prefab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Prefabs/Simulation Sessions/CartPole.prefab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Prefabs/Simulation Sessions/CartPole3DSession.prefab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Prefabs/Simulation Sessions/Crawler.prefab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Prefabs/Simulation Sessions/Demo Agents/CartPoleDemo.prefab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Prefabs/Simulation Sessions/Falling Rectangular Prism Session.prefab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Prefabs/Simulation Sessions/Simulation Session.prefab" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Resources/Settings/SimulatorSettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scenes/CartPole.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scenes/CartPole3D.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scenes/Crawl.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scenes/Demos/CartPoleDemo.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scenes/Dispatcher.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scenes/FallingRectangularPrism.unity" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/DispatchCommands.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/DispatchParser.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/ErrorWarningParser.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/ICommunicator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/IParser.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/JsonParser.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/MultiplexerParser.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/Parser.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/ParserStack.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/PipeCommunicator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/PipeCommunicatorBuffer.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/Tests/AsyncParserSuite.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/Tests/DispatchParserSuite.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/Tests/ErrorWarningParserSuite.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/Tests/FullPipelineSuite.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/Tests/ParserStackSuite.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/Tests/werignac.Communication.Tests.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Communication/werignac.Communication.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Creature/Complex/Creature.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Creature/Complex/Limb.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Creature/Complex/Neurons/ArticulationInput.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Creature/Complex/Neurons/ArticulationOutput.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Creature/Complex/Neurons/Neuron.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Creature/Complex/Neurons/Signal.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/CustomSubsystems/CustomSubsystem.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/CustomSubsystems/PhysicsUpdateSubsystem.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/CustomSubsystems/SynchronizationContextSubsystem.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/CustomSubsystems/werignac.GeneticAlgorithm.Subsystems.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Dispatcher.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Experiment.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/HighVelocityEvaluation.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/IFitnessEvaluator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/StandingEvaluator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Fitness Evaluation/StraightLineEvaluator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/IAsyncSimulateStep.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/PopulationController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Settings/Editor/SimulationSettingsProvider.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Settings/Editor/werignac.GeneticAlgorithm.Settings.Editors.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Settings/SimulationSettings.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Settings/werignac.GeneticAlgorithm.Settings.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/SimulationInitializationData.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/SimulationSessionController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Subsystems/SubsystemAttribute.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Subsystems/SubsystemManagerComponent.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Subsystems/werignac.Subsystem.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Utils/InertiaTensorUtils.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Utils/WerignacUtils.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/Utils/werignac.Utils.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Common/werignac.GeneticAlgorithm.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/CartPoleController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/CartPoleEvaluator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/CartPoleExperiment.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/CartPoleMessaging.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/CartPolePopulationController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/CartPoleSessionController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/Demo/CartPoleDemo.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/Demo/CartPoleDemoSession.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/Demo/OnnxAgentCartPoleInput.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/ExternalAgentCartPoleInput.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/ICartPoleIOAsync.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/PlayerCartPoleInput.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/RandomWind.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole/werignac.CartPole.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/CartPole3D.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/CartPole3DController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/CartPole3DExperiment.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/CartPole3DFitnessEvaluator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/CartPole3DGoalGenerator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/CartPole3DInitialImpulse.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/CartPole3DMessages.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/CartPole3DPopulationController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/CartPole3DSessionController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/CartPole3DStateObserver.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/DemoUpdateLoop.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/ExternalAgentCarpole3DIO.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/ICartPole3DIO.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/PlayerCartPole3DIO.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/CartPole3D/werignac.CartPole3D.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/CrawlerComponent.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/CrawlerInitializationData.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/CrawlingBodyPartComponent.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/CrawlingExperiment.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/CrawlingPopulationController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/CrawlingSessionController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/Editor/CrawlerComponentEditor.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/Editor/CrawlingBodyPartComponentEditor.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/Editor/werignac.GeneticAlgorithm.Crawling.Editor.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/Tests/werignac.Crawling.Tests.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/Crawling/werignac.Crawling.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/FallingRectangularPrism/FRPExperiment.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/FallingRectangularPrism/FRPPopulationController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/FallingRectangularPrism/FRPSessionController.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/FallingRectangularPrism/FallingRectangularPrismInitializationData.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/FallingRectangularPrism/FallingRectuangularPrismComponent.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/Scripts/Experiments/FallingRectangularPrism/werignac.FallingRectangularPrism.asmdef" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/Assets/packages.config" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/TemplateData/MemoryProfiler.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/TemplateData/favicon.ico" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/TemplateData/fullscreen-button.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/TemplateData/progress-bar-empty-dark.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/TemplateData/progress-bar-empty-light.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/TemplateData/progress-bar-full-dark.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/TemplateData/progress-bar-full-light.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/TemplateData/style.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/TemplateData/unity-logo-dark.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/TemplateData/unity-logo-light.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/TemplateData/webgl-logo.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/TemplateData/webmemd-icon.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/DemoBuilds/CartPole/PlainCartPole/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/AudioManager.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/BurstAotSettings_StandaloneWindows.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/BurstAotSettings_WebGL.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/ClusterInputManager.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/CommonBurstAotSettings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/DynamicsManager.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/EditorBuildSettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/EditorSettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/GraphicsSettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/InputManager.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/MemorySettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/NavMeshAreas.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/PackageManagerSettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/Physics2DSettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/PresetManager.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/ProjectSettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/ProjectVersion.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/QualitySettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/SceneTemplateSettings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/TagManager.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/TimeManager.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/TimelineSettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/UnityConnectSettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/VFXManager.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/VersionControlSettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/VisualScriptingSettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/CreatureSimulation/ProjectSettings/XRSettings.asset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/falling_rectangular_prism.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/falling_rectangular_prism.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/simulation_instance.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/unity_instance.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/NNs/CartPole/cart_pole_agent.onnx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Prefabs/Simulation Sessions/Demo Agents/CartPoleDemo2.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Prefabs/Simulation Sessions/Demo Agents/CartPoleDemo2.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleMessaging.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleMessaging.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/OnnxAgentCartPoleInput.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/OnnxAgentCartPoleInput.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/PlayerWind.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/PlayerWind.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/RandomWind.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/RandomWind.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/ProjectSettings/DynamicsManager.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/ProjectSettings/DynamicsManager.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/ProjectSettings/EditorBuildSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/ProjectSettings/EditorBuildSettings.asset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/training_cart_pole.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/training_cart_pole.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/training_cart_pole_3d.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/training_cart_pole_3d.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/two_part_crawling_creature.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/two_part_crawling_creature.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -292,7 +83,7 @@
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
-        <env name="UNITY_SIMULATOR_PATH" value="D:\SoloProjects\CreatureEvolution\UnityRLEnvironment\Builds\2024-09-02_14-16\UnityRLEnvironment.exe" />
+        <env name="UNITY_SIMULATOR_PATH" value="D:\SoloProjects\CreatureEvolution\UnityRLEnvironment\Builds\2024-09-03_12-11\UnityRLEnvironment.exe" />
       </envs>
       <option name="SDK_HOME" value="D:\SoloProjects\CreatureEvolutionVenv\Scripts\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
@@ -399,6 +190,8 @@
       <workItem from="1725306960411" duration="4993000" />
       <workItem from="1725312432082" duration="312000" />
       <workItem from="1725316177360" duration="1283000" />
+      <workItem from="1725390104255" duration="1325000" />
+      <workItem from="1725392845944" duration="274000" />
     </task>
     <servers />
   </component>
@@ -416,19 +209,8 @@
       </map>
     </option>
   </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/src/falling_rectangular_prism.py</url>
-          <line>215</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
-  </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole.coverage" NAME="training_cart_pole Coverage Results" MODIFIED="1725312591895" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole.coverage" NAME="training_cart_pole Coverage Results" MODIFIED="1725390913350" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/CreatureEvolution$two_part_crawling_creature.coverage" NAME="two_part_crawling_creature Coverage Results" MODIFIED="1725310398835" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole_3d.coverage" NAME="training_cart_pole_3d Coverage Results" MODIFIED="1723262990916" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/CreatureEvolution$falling_rectangular_prism.coverage" NAME="falling_rectangular_prism Coverage Results" MODIFIED="1725312539334" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
