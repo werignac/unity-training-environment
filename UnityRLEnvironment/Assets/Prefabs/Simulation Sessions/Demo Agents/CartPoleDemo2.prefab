@@ -253,11 +253,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6982399c4c92dda4bbb9b89f5ec5c883, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!171741748 &1196406563650819712 stripped
-ArticulationBody:
-  m_CorrespondingSourceObject: {fileID: 8844741257640346461, guid: 7cbff739801ab1b488407d859097773c, type: 3}
-  m_PrefabInstance: {fileID: 7648422930069542365}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &8516885984521636321 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2023988202998930492, guid: 7cbff739801ab1b488407d859097773c, type: 3}
@@ -275,7 +270,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4446d57233c8aca4482236977e6203eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  modelAsset: {fileID: 5022602860645237092, guid: 0a37af2cf1656df46bc1e83c7a991908, type: 3}
+  modelAsset: {fileID: 5022602860645237092, guid: 24c6756b8c6347c499fae65f1bdd8705, type: 3}
 --- !u!114 &5740639141294843936
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -289,10 +284,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   perlinStepMultiplier: 0.2
-  maxForce: 5
-  pole: {fileID: 1196406563650819712}
-  onWindUpdate:
+  maxConveyorSpeed: 2
+  cart: {fileID: 9115907963799400318}
+  onConveyorUpdate:
     m_PersistentCalls:
       m_Calls: []
   approachRate: 0.2
   usePlayerInput: 1
+--- !u!171741748 &9115907963799400318 stripped
+ArticulationBody:
+  m_CorrespondingSourceObject: {fileID: 1488050308227906211, guid: 7cbff739801ab1b488407d859097773c, type: 3}
+  m_PrefabInstance: {fileID: 7648422930069542365}
+  m_PrefabAsset: {fileID: 0}

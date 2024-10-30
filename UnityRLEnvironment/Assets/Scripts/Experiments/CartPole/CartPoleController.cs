@@ -30,7 +30,10 @@ namespace werignac.CartPole
 
 		private CartPoleCommand command;
 
-
+		/// <summary>
+		/// Initialize the cart pole, including the angle of the pole.
+		/// </summary>
+		/// <param name="initialAngle">The initial angle of the pole.</param>
 		public void Initialize(float initialAngle)
 		{
 			List<float> initialPositions = new List<float>();
@@ -42,24 +45,48 @@ namespace werignac.CartPole
 			io = GetComponent<ICartPoleIOAsync>();
 		}
 
+		/// <summary>
+		/// Get the state of the cart to be sent in OnSimulateStep Async.
+		/// </summary>
+		/// <param name="deltaTime"></param>
 		public void OnSimulateStep(float deltaTime)
 		{
 			state = GetCartState();
 		}
 
+		/// <summary>
+		/// Send the state of the cart, then get a command from IO, which may involve multithreading.
+		/// </summary>
+		/// <param name="deltaTime"></param>
+		/// <returns></returns>
 		public async Task OnSimulateStepAsync(float deltaTime)
 		{
 			command = await WerignacUtils.AwaitTimeout(io.GetCommandAsync(state), 1500, $"wait for command in cart pole controller");
 		}
 
+		/// <summary>
+		/// After receiving a cart pole command, turn the command into movement.
+		/// </summary>
+		/// <param name="deltaTime"></param>
 		public void OnPostSimulateStepAsync(float deltaTime)
 		{
-			if (command.MoveRight)
+
+			Vector3 moveDirection;
+
+			switch (command)
 			{
-				cart.AddForce(Vector3.forward * cartForce);
-			} else {
-				cart.AddForce(Vector3.back * cartForce);
-			}
+				case CartPoleCommand.RIGHT:
+					moveDirection = Vector3.forward;
+					break;
+				case CartPoleCommand.LEFT:
+					moveDirection = Vector3.back;
+					break;
+				default:
+					moveDirection = Vector3.zero;
+					break;
+			} 
+			
+			cart.AddForce(moveDirection * cartForce);
 		}
 
 		private CartPoleState GetCartState()

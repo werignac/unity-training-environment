@@ -13,7 +13,8 @@ namespace werignac.CartPole
 
 		private void Update()
 		{
-			command.MoveRight = Input.GetKey(KeyCode.Space);
+			// TODO: Use new input system.
+			command = Input.GetKey(KeyCode.Space)? CartPoleCommand.RIGHT : CartPoleCommand.LEFT;
 		}
 
 		public async Task<CartPoleCommand> GetCommandAsync(CartPoleState state)

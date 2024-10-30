@@ -12,7 +12,7 @@ namespace werignac.CartPole
 		protected override GameObject InitializeSessionObject()
 		{
 			GetComponent<CartPoleController>().Initialize(InitData.InitialAngle);
-			GetComponent<RandomWind>().Initialize(InitData.WindSeed);
+			GetComponent<RandomConveyorBelt>().Initialize(InitData.WindSeed);
 			GetComponent<ExternalAgentCartPoleInput>()?.Initialize(InitData.Index);
 			return transform.GetChild(0).gameObject;
 		}

@@ -132,8 +132,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d06c8bbeeaaf4346805b947e20f9784, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxForce: 5
-  pole: {fileID: 7006741812253672311}
+  perlinStepMultiplier: 0.2
+  maxConveyorSpeed: 2
+  cart: {fileID: 1091201651675593353}
+  onConveyorUpdate:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &3881058884479328400
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -163,7 +167,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fitness: {fileID: 9204543940179295854}
   simulationDuration: 10
-  creatureObject: {fileID: 4799705970197300147}
+  sessionObject: {fileID: 0}
 --- !u!114 &4257158011235578337
 MonoBehaviour:
   m_ObjectHideFlags: 0

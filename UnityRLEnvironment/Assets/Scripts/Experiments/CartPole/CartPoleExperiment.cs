@@ -12,7 +12,7 @@ namespace werignac.CartPole
 {
 	public class CartPoleExperiment : Experiment<CartPoleInitializationData, RandomCartPole, DeserializedCartPoleInitializationData>
 	{
-		public MultiplexedParserToSubParsers<JsonParser<CartPoleCommand>> Multiplexer { get; private set; } = new MultiplexedParserToSubParsers<JsonParser<CartPoleCommand>>();
+		public MultiplexedParserToSubParsers<JsonParser<DeserializedCartPoleCommand>> Multiplexer { get; private set; } = new MultiplexedParserToSubParsers<JsonParser<DeserializedCartPoleCommand>>();
 
 		protected override CartPoleInitializationData SerializedToInitData(int index, DeserializedCartPoleInitializationData serializedInit)
 		{

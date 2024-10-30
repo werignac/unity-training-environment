@@ -16,7 +16,7 @@ namespace werignac.CartPole
 	public class ExternalAgentCartPoleInput : MonoBehaviour, ICartPoleIOAsync
 	{
 		private Dispatcher dispatcher;
-		private JsonParser<CartPoleCommand> jsonParser;
+		private JsonParser<DeserializedCartPoleCommand> jsonParser;
 		private CartPoleExperiment experiment;
 		private int instance_id;
 
@@ -42,16 +42,16 @@ namespace werignac.CartPole
 
 			if (dispatcher != null)
 			{
-				JsonCommand<CartPoleCommand> command = await WerignacUtils.AwaitTimeout(jsonParser.GetCommandAsync(), 1000, $"wait for command in cart pole {instance_id}");
+				JsonCommand<DeserializedCartPoleCommand> command = await WerignacUtils.AwaitTimeout(jsonParser.GetCommandAsync(), 1000, $"wait for command in cart pole {instance_id}");
 				dispatcher.CommunicatorBuffer.AcceptNext();
 				// Get the last move instruction and save it for PostSimulateStepAsync.
 				foreach (var _command in command.DeserializedObjects)
 				{
-					return _command;
+					return _command.MoveRight ? CartPoleCommand.RIGHT : CartPoleCommand.LEFT;
 				}
 			}
 
-			return new CartPoleCommand();
+			return CartPoleCommand.NO_OP;
 		}
 
 		private void OnDestroy()

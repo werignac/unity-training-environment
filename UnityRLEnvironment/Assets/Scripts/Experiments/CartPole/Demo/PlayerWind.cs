@@ -8,7 +8,7 @@ using werignac.Utils;
 
 namespace werignac.CartPole.Demo
 {
-    public class PlayerWind : RandomWind
+    public class PlayerWind : RandomConveyorBelt
     {
 		private float currentWind = 0;
 		
@@ -32,8 +32,8 @@ namespace werignac.CartPole.Demo
 
 			if (WerignacUtils.TryGetComponentInActiveScene(out CartPoleDemo demo))
 			{
-				SetUsePlayerInput(demo.UseInputForWind);
-				demo.onUseInputForWindChanged.AddListener(SetUsePlayerInput);
+				SetUsePlayerInput(demo.UseInputForConveyor);
+				demo.onUseInputForConveyorChanged.AddListener(SetUsePlayerInput);
 			}
 		}
 
@@ -83,7 +83,7 @@ namespace werignac.CartPole.Demo
 					currentWind = Mathf.Clamp(currentWind, -1, 1);
 				}
 
-				SetWind(currentWind);
+				ApplyConveyorVelocity(currentWind);
 			}
 			else
 			{
@@ -91,12 +91,12 @@ namespace werignac.CartPole.Demo
 			}
 		}
 
-		public override float GetNormalizedWind()
+		public override float GetRandomNormalizedConveyorVelocity()
 		{
 			if (usePlayerInput)
 				return currentWind;
 			else
-				return base.GetNormalizedWind();
+				return base.GetRandomNormalizedConveyorVelocity();
 		}
 	}
 }

@@ -41,9 +41,21 @@ namespace werignac.CartPole
 		}
 	}
 
-	public struct CartPoleCommand
+	/// <summary>
+	/// Cart pole command as received from json.
+	/// </summary>
+	public struct DeserializedCartPoleCommand
 	{
 		public bool MoveRight { get; set; }
+	}
+
+	/// <summary>
+	/// Cart pole commands recognized by the controller.
+	/// NO_OP is added for when the agent is disabled, but is not usable by a NN agent.
+	/// </summary>
+	public enum CartPoleCommand
+	{
+		RIGHT, LEFT, NO_OP
 	}
 
 	public struct CartPoleState
@@ -69,10 +81,10 @@ namespace werignac.CartPole
 			PoleAngle = pole.jointPosition[0] * Mathf.Rad2Deg;
 			PoleAngularVelocity = pole.jointVelocity[0];
 
-			RandomWind _rWind = cartObj.GetComponentInParent<RandomWind>();
+			RandomConveyorBelt _rWind = cartObj.GetComponentInParent<RandomConveyorBelt>();
 
-			Wind = _rWind.GetWind();
-			NormalizedWind = _rWind.GetNormalizedWind();
+			Wind = _rWind.GetRandomConveyorVelocity();
+			NormalizedWind = _rWind.GetRandomNormalizedConveyorVelocity();
 
 			Score = score;
 		}

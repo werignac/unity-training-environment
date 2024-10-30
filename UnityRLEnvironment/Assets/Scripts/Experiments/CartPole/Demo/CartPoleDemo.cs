@@ -18,20 +18,20 @@ namespace werignac.CartPole.Demo
 		private GameObject activeSessionGO = null;
 
 		[SerializeField]
-		private bool _useInputForWind = false;
+		private bool _useInputForConveyor = false;
 		[SerializeField]
 		private bool _enableAgent = true;
 
-		public bool UseInputForWind
+		public bool UseInputForConveyor
 		{
 			get
 			{
-				return _useInputForWind;
+				return _useInputForConveyor;
 			}
 			set
 			{
-				_useInputForWind = value;
-				onUseInputForWindChanged.Invoke(_useInputForWind);
+				_useInputForConveyor = value;
+				onUseInputForConveyorChanged.Invoke(_useInputForConveyor);
 			}
 		}
 
@@ -49,7 +49,7 @@ namespace werignac.CartPole.Demo
 		}
 
 		[Header("Events")]
-		public UnityEvent<bool> onUseInputForWindChanged = new UnityEvent<bool>();
+		public UnityEvent<bool> onUseInputForConveyorChanged = new UnityEvent<bool>();
 		public UnityEvent<bool> onEnableAgentChanged = new UnityEvent<bool>();
 
 		void Start()

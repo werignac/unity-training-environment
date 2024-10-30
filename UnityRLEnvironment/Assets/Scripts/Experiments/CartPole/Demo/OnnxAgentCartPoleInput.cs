@@ -28,17 +28,17 @@ namespace werignac.CartPole
 		{
 			float[] tensorData = new float[] { state.CartPosition, state.CartVelocity, state.PoleAngle, state.PoleAngularVelocity, state.NormalizedWind};
 
-			Tensor input = new Tensor(1, 4, tensorData);
+			Tensor input = new Tensor(1, 5, tensorData);
 
 			IEnumerator manualSchedule = worker.StartManualSchedule(input);
 			while (manualSchedule.MoveNext()) { }
 			Tensor output = worker.PeekOutput("/2/Add_output_0");
 
 			System.Random rng = new System.Random();
-			CartPoleCommand command = new CartPoleCommand();
+			CartPoleCommand command;
 			
 			// TODO: Figure out why Softmax is applied on the wrong direction.
-			command.MoveRight = output[0] > output[1];
+			command = output[0] > output[1] ? CartPoleCommand.RIGHT : CartPoleCommand.LEFT;
 
 			input.Dispose();
 			output.Dispose();

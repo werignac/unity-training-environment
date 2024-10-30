@@ -28,16 +28,15 @@ namespace werignac.CartPole.Demo
 			isOn = _isOn;
 		}
 
+		/// <summary>
+		/// If the Onnx agent is on, get the command from it.
+		/// Otherwise, return NO_OP.
+		/// </summary>
+		/// <param name="state">The current state of the cart pole session.</param>
+		/// <returns>The action the agent took, or NO_OP if the agent is toggled off.</returns>
 		public override CartPoleCommand GetCommand(CartPoleState state)
 		{
-			if (isOn)
-				return base.GetCommand(state);
-			else
-			{
-				CartPoleCommand randomCommand = new CartPoleCommand();
-				randomCommand.MoveRight = rng.NextDouble() > 0.5;
-				return randomCommand;
-			}
+			return (isOn) ? base.GetCommand(state) : CartPoleCommand.NO_OP;
 		}
 
         

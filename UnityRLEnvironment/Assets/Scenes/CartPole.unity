@@ -352,8 +352,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   populationController: {fileID: 1901938780}
-  noPipePopulationSize: 128
-  OnCreatureScored:
+  noPipePopulationSize: 1
+  OnSessionScored:
     m_PersistentCalls:
       m_Calls: []
   OnExpirementTerminated:
@@ -398,13 +398,13 @@ MonoBehaviour:
   - Session 13
   - Session 14
   - Session 15
-  onOutOfCreatures:
+  onOutOfSimulationSessionInitData:
     m_PersistentCalls:
       m_Calls: []
-  onCreatureFinishedSimulation:
+  onSessionFinishedSimulation:
     m_PersistentCalls:
       m_Calls: []
-  onCreatureStartedSimulation:
+  onSessionStartedSimulation:
     m_PersistentCalls:
       m_Calls: []
   onError:

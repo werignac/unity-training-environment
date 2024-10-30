@@ -10,7 +10,7 @@ namespace werignac.CartPole.Demo
     public class CartPoleDemoSession : MonoBehaviour
     {
 		[SerializeField]
-		private RandomWind randomWind;
+		private RandomConveyorBelt randomWind;
 
 		[SerializeField]
 		private CartPoleEvaluator evaluator;
@@ -42,7 +42,21 @@ namespace werignac.CartPole.Demo
 			CartPoleState state = new CartPoleState(creature, score);
 			CartPoleCommand command = io.GetCommand(state);
 
-			Vector3 moveDirection = (command.MoveRight) ? Vector3.forward : Vector3.back;
+			Vector3 moveDirection;
+			
+			switch (command)
+			{
+				case CartPoleCommand.RIGHT:
+					moveDirection = Vector3.forward;
+					break;
+				case CartPoleCommand.LEFT:
+					moveDirection = Vector3.back;
+					break;
+				default:
+					moveDirection = Vector3.zero;
+					break;
+			}
+				
 			creature.GetComponent<ArticulationBody>().AddForce(moveDirection * 100f); // TODO: Get magnitude from shared source as sim.
 
 			if (terminate)

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace werignac.CartPole.Demo
 {
-    public class WindIndicator : MonoBehaviour
+    public class ConveyorIndicator : MonoBehaviour
     {
 		[SerializeField]
 		private Slider arrowLeft;
@@ -19,7 +19,7 @@ namespace werignac.CartPole.Demo
 
 		public void OnResetExperiment(CartPoleDemoSession session)
 		{
-			session.GetComponent<RandomWind>().onWindUpdate.AddListener(UpdateGFX);
+			session.GetComponent<RandomConveyorBelt>().onConveyorUpdate.AddListener(UpdateGFX);
 		}
 
 		public void UpdateGFX(float _, float normalizedWind)
