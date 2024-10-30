@@ -33,6 +33,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from __future__ import annotations
 
 import argparse
 import json
@@ -40,6 +41,10 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import random
+
+from collections import deque
+from collections.abc import Callable, Iterable
 
 import torch
 from tqdm import tqdm
@@ -75,11 +80,18 @@ optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
 scores = []
 
+
 def discount_rewards(rewards, gamma=0.99):
+    """
+    Discount the rewards for a series of rewards by a factor of gamma.
+    """
     lenr = len(rewards)
-    disc_return = torch.pow(gamma,torch.arange(lenr).float()) * rewards
+    # 1 * rewards, gamma ** 2 * rewards, gamma ** 3 * rewards
+    disc_return = torch.pow(gamma, torch.arange(lenr).float()) * rewards
+    # Normalize
     disc_return /= disc_return.max()
     return disc_return
+
 
 def loss_fn(preds, r):
     return -1 * torch.sum(r * torch.log(preds))
@@ -119,12 +131,17 @@ def execute_epoch(sessions, sim_inst: UnityInstance):
 
 
 def read_simulator_responses(starting_conditions: pd.DataFrame, sim_inst: UnityInstance):
+    """
+    Continuously reads the responses given by the simulator.
+    Responds by making the agent choose actions.
+    When a session has finished, puts the results into a replay buffer and performs gradient descent.
+    """
 
-    """
-    Mapping of session indexes to running brains. The brains take in simulation frame
-    data and output actions for the running simulations.
-    """
-    running_brains: dict = dict()
+    # Mapping of session indexes to running brains. The brains take in simulation frame
+    # data and output actions for the running simulations.
+    running_brains: dict[int, AgentBrain] = dict()
+
+    replay: ExperienceReplay = ExperienceReplay(1500, 500)  # TODO: include ways to specify hyperparameters.
 
     with tqdm(range(starting_conditions.shape[0])) as progress:
         while True:
@@ -147,11 +164,16 @@ def read_simulator_responses(starting_conditions: pd.DataFrame, sim_inst: UnityI
                     score_parsed = False
 
                 if score_parsed:
+                    # If this is a score, the session has ended.
+                    # We can perform gradient descent.
                     starting_conditions.loc[index, "Score"] = score
-                    running_brains[index].on_session_end()
+                    running_brains[index].on_session_end(replay)
                     del running_brains[index]
                     progress.update(1)
                 else:
+                    # Otherwise, if this is data about session in progress,
+                    # give the running brain the new state and get the next
+                    # command to run for that session.
                     brain: AgentBrain = running_brains[index]
                     command = brain.process_frame_data(json.loads(line_split[1]))
                     if not (command is None):
@@ -207,25 +229,148 @@ class AgentBrain:
             data['NormalizedWind']
         ]), data['Score']
 
-    def on_session_end(self):
+    def on_session_end(self, replay: ExperienceReplay):
         """
         When a session has ended, gather all the rewards, states, and actions, and perform
         gradient descent.
         """
         ep_len = len(self.transitions)
         scores.append(ep_len)
-        reward_batch = torch.Tensor([r for (s, a, r) in self.transitions]).flip(dims=(0,))
-        disc_returns = discount_rewards(reward_batch)
+        # Isolate the rewards.
+        reward_batch = torch.Tensor([r for (s, a, r) in self.transitions])
+        # Reverse the rewards so that the earliest actions are rewarded the most, while later actions are not rewarded as much.
+        # Apply a future discount based on a decay rate of gamma (0.99).
+        disc_returns = discount_rewards(reward_batch.flip(dims=(0,)))
+        # Isolate the states.
         state_batch = torch.Tensor([s for (s, a, r) in self.transitions])
+        # Isolate teh actions.
         action_batch = torch.Tensor([a for (s, a, r) in self.transitions])
+
+        """
+        # Run gradient descent on results.
+        # Predict actions, independently of the actions that were actually taken.
         pred_batch = model(state_batch)
+        # Get the probabilities of actions that were previously taken.
         prob_batch = pred_batch.gather(dim=1, index=action_batch.long().view(-1, 1)).squeeze()
-        loss = loss_fn(prob_batch, disc_returns)
+        # Calculate the loss for the new probabilities of old actions.
+        loss = loss_fn(prob_batch, disc_returns)  # TODO: Make loss function an argument.
+
+        # Perform Gradient Descent
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        """
+
+        # Construct experiences for replay.
+        v_experience_constructor = np.vectorize(Experience, excluded="state_out", signature='(n),(),(),()->()')
+        experiences = v_experience_constructor(state_batch, action_batch, None, disc_returns)
+
+        # Add the experiences and try to replay.
+        replay.add_experiences(experiences)
+        # TODO: Uncomment
+        replay.replay_experiences(model)
+
+#endregion Brain Control
+
+#region Experience Replay
+
+class Experience:
+    def __init__(
+            self,
+            state_in: torch.Value,
+            action: torch.Value,
+            state_out: torch.Value,
+            reward: torch.Value
+    ):
+        self.state_in = state_in
+        self.action = action
+        self.state_out = state_out
+        self.reward = reward
+
+    def get_state_in(self) -> torch.Value:
+        return self.state_in
+
+    def get_action(self) -> torch.Value:
+        return self.action
+
+    def get_state_out(self) -> torch.Value:
+        return self.state_out
+
+    def get_reward(self) -> torch.Value:
+        return self.reward
+
+    def get_all(self) -> tuple[torch.Value, torch.Value, torch.Value, torch.Value]:
+        return self.state_in, self.action, self.state_out, self.reward
+
+    # Vectorized Getters
+    v_get_state_in: Callable[[Iterable[Experience]], Iterable[torch.Value]] = np.vectorize(
+        get_state_in,
+        signature='()->(n)'
+    )
+    v_get_action: Callable[[Iterable[Experience]], Iterable[torch.Value]] = np.vectorize(get_action)
+    v_get_state_out: Callable[[Iterable[Experience]], Iterable[torch.Value]] = np.vectorize(get_state_out)
+    v_get_reward: Callable[[Iterable[Experience]], Iterable[torch.Value]] = np.vectorize(get_reward)
+    v_get_all: Callable[[Iterable[Experience]], Iterable[Iterable[torch.Value]]] = np.vectorize(
+        get_all,
+        signature='()->(n),(),(),()'  # TODO: Change 3rd output to n when state is not None.
+    )
+
+
+class ExperienceReplay:  # TODO: Include locks for parallelization.
+    def __init__(
+            self,
+            saved_experiences_size: int = 10000,
+            mini_batch_size: int = 500
+    ):
+        # Queue of saved experiences.
+        self.replay: deque[Experience] = deque(maxlen=saved_experiences_size)
+        # How many experiences are picked out of the replay buffer when we want to do
+        self.mini_batch_size = mini_batch_size
+
+        assert self.mini_batch_size <= saved_experiences_size, f"Cannot sample more experiences than the amount saved. {self.mini_batch_size} <= {saved_experiences_size}"
+
+    def add_experiences(self, experiences: Iterable[Experience]) -> None:
+        """
+        Adds experiences to the experience replay buffer.
+        """
+        self.replay.extend(experiences)
+
+    def replay_experiences(self, model: Callable) -> None:
+        """
+        Trains the agent by replaying a random batch of experiences.
+        """
+
+        # Get a random batch of experiences.
+        random_mini_batch = random.sample(self.replay, min(self.mini_batch_size, len(self.replay)))
+        # Separate the experiences out by parts.
+        states_in, actions, states_out, rewards = Experience.v_get_all(random_mini_batch)
+
+        # Convert to tensors.
+        states_in = torch.Tensor(states_in)
+        actions = torch.Tensor(actions)
+        # TODO: Remove. Kept for completeness.
+        # states_out = torch.Tensor(states_out)
+        rewards = torch.Tensor(rewards)
+
+        # Predict actions, independently of the actions that were actually taken.
+        pred_batch = model(states_in)
+        # Get the probabilities of actions that were previously taken.
+        prob_batch = pred_batch.gather(dim=1, index=actions.long().view(-1, 1)).squeeze()
+        # Calculate the loss for the new probabilities of old actions.
+        # If the old action was bad, and we have a low probability for it, the probability should not change.
+        # If the old action was good, and we have a low probability for it, the probability should change.
+        # If the old action was bad, and we have a high probability for it, the probability should change.
+        # If the old action was good, and we have a high probability for it, the probability should not change.
+        loss = loss_fn(prob_batch, rewards)  # TODO: Make loss function an argument.
+
+        # Perform Gradient Descent
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-#endregion Brain Control
+
+
+#endregion Experience Replay
 
 def save_onnx():
     """
@@ -273,7 +418,7 @@ if __name__ == "__main__":
 
     # Create the initial states of the sessions.
     sessions = pd.DataFrame(columns=["Initial Condition", "Score"])
-    for i in range(1024):
+    for i in range(1024 * 4):
         sessions.loc[len(sessions.index)] = [CartPoleData(), 0]
 
     if STATS > 0:
@@ -284,6 +429,11 @@ if __name__ == "__main__":
     exec_args["simulator_args"] = SIMULATOR_ARGS
     sim_inst = UnityInstance(os.path.join(PIPE_PATH, PIPE_NAME), exec_args if RUN_EXECUTABLE else None,
                               no_timeout=True)
+
+    if RUN_EXECUTABLE:
+        print(f"Running Simulator: {SIMULATOR_PATH}")
+    else:
+        print(f"Connecting to Simulator without subprocess")
 
     for i in range(EPOCH_COUNT):
         print(f"\nEpoch {i + 1}")
@@ -301,7 +451,7 @@ if __name__ == "__main__":
         plt.title(f"Performance over Epochs")
         plt.ylabel(f"Score")
         plt.xlabel(f"Epoch (first epoch at 1)")
-        plt.plot(np.arange(1, 1024 + 1, 1), scores)
+        plt.plot(np.arange(1, 1024 * 4 + 1, 1), scores)
         ax.grid()
 
         plt.show()
