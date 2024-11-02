@@ -5,31 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e854dc44-5fa2-4a5c-8c10-3aec83617281" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/cart_pole_agent_good.onnx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/AYellowpaper.SerializedCollections.Editor.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/AYellowpaper.SerializedCollections.Editor.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/AYellowpaper.SerializedCollections.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/AYellowpaper.SerializedCollections.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assembly-CSharp-firstpass.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assembly-CSharp-firstpass.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/NNs/CartPole/cart_pole_agent 1.onnx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Prefabs/Simulation Sessions/CartPole.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Prefabs/Simulation Sessions/CartPole.prefab" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Prefabs/Simulation Sessions/Demo Agents/CartPoleDemo2.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Prefabs/Simulation Sessions/Demo Agents/CartPoleDemo2.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scenes/CartPole.unity" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scenes/CartPole.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scenes/Demos/CartPoleDemo.unity" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scenes/Demos/CartPoleDemo.unity" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleExperiment.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleExperiment.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleMessaging.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleMessaging.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleSessionController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleSessionController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/CartPoleDemo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/CartPoleDemo.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/CartPoleDemoSession.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/CartPoleDemoSession.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/OnnxAgentCartPoleInput.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/OnnxAgentCartPoleInput.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/PlayerWind.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/PlayerWind.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/ToggleOnnxAgentCartPoleInput.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/ToggleOnnxAgentCartPoleInput.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/Demo/WindIndicator.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/ExternalAgentCartPoleInput.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/ExternalAgentCartPoleInput.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/PlayerCartPoleInput.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/PlayerCartPoleInput.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/RandomWind.cs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/ProjectSettings/DynamicsManager.asset" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/ProjectSettings/DynamicsManager.asset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/cart_pole_agent.onnx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleEvaluator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleEvaluator.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/cart_pole_agent.onnx" beforeDir="false" afterPath="$PROJECT_DIR$/src/cart_pole_agent.onnx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/training_cart_pole.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/training_cart_pole.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -96,7 +77,7 @@
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
-        <env name="UNITY_SIMULATOR_PATH" value="D:\SoloProjects\CreatureEvolution\UnityRLEnvironment\Builds\2024-10-28_21-10\UnityRLEnvironment.exe" />
+        <env name="UNITY_SIMULATOR_PATH" value="D:\SoloProjects\CreatureEvolution\UnityRLEnvironment\Builds\2024-10-30_16-38_No_Conveyor\UnityRLEnvironment.exe" />
       </envs>
       <option name="SDK_HOME" value="D:\SoloProjects\CreatureEvolutionVenv\Scripts\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
@@ -105,7 +86,7 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/training_cart_pole.py" />
-      <option name="PARAMETERS" value="-stats 1 -display" />
+      <option name="PARAMETERS" value="-stats 2 -display" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -208,6 +189,14 @@
       <workItem from="1729902832199" duration="3441000" />
       <workItem from="1730164083429" duration="1721000" />
       <workItem from="1730227799943" duration="10945000" />
+      <workItem from="1730317931172" duration="12086000" />
+      <workItem from="1730331567586" duration="353000" />
+      <workItem from="1730335792387" duration="737000" />
+      <workItem from="1730340912770" duration="2405000" />
+      <workItem from="1730344302179" duration="487000" />
+      <workItem from="1730400206305" duration="6188000" />
+      <workItem from="1730576028025" duration="100000" />
+      <workItem from="1730578118493" duration="2804000" />
     </task>
     <servers />
   </component>
@@ -226,7 +215,7 @@
     </option>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole.coverage" NAME="training_cart_pole Coverage Results" MODIFIED="1730262218164" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole.coverage" NAME="training_cart_pole Coverage Results" MODIFIED="1730581066769" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/CreatureEvolution$two_part_crawling_creature.coverage" NAME="two_part_crawling_creature Coverage Results" MODIFIED="1725310398835" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole_3d.coverage" NAME="training_cart_pole_3d Coverage Results" MODIFIED="1723262990916" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/CreatureEvolution$falling_rectangular_prism.coverage" NAME="falling_rectangular_prism Coverage Results" MODIFIED="1725312539334" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />

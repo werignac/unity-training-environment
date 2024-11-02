@@ -36,6 +36,7 @@ SOFTWARE.
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import os
 import matplotlib.pyplot as plt
@@ -47,6 +48,8 @@ from collections import deque
 from collections.abc import Callable, Iterable
 
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from tqdm import tqdm
 
 from unity_instance import UnityInstance
@@ -64,37 +67,66 @@ CREATURE_PIPE_PREFIX = "Pipe"
 
 #region Neural Net
 
-l1 = 5
-l2 = 150
-l3 = 2
+
+"""
+l1 = 4
+l2 = 25
+l3 = 50
+l4 = 25
 
 model = torch.nn.Sequential(
     torch.nn.Linear(l1, l2),
     torch.nn.LeakyReLU(),
     torch.nn.Linear(l2, l3),
+    torch.nn.LeakyReLU(),
+    torch.nn.Linear(l3, 2),
     torch.nn.Softmax(dim=0)
 )
 
-learning_rate = 0.009
+critic = torch.nn.Sequential(
+    torch.nn.Linear(l1, l2),
+    torch.nn.LeakyReLU(),
+    torch.nn.Linear(l2, l3),
+    torch.nn.LeakyReLU(),
+    torch.nn.Linear(l3, l4),
+    torch.nn.LeakyReLU(),
+    torch.nn.Linear(l4, 1),
+    torch.nn.Tanh()
+)
+"""
+
+class ActorCritic(nn.Module): #B
+    def __init__(self):
+        super(ActorCritic, self).__init__()
+        self.l1 = nn.Linear(4,25)
+        self.l2 = nn.Linear(25,50)
+        self.actor_lin1 = nn.Linear(50,2)
+        self.l3 = nn.Linear(50,25)
+        self.critic_lin1 = nn.Linear(25,1)
+    def forward(self,x):
+        x = F.normalize(x,dim=0)
+        y = F.relu(self.l1(x))
+        y = F.relu(self.l2(y))
+        actor = F.softmax(self.actor_lin1(y),dim=0) #C
+        c = F.relu(self.l3(y.detach()))
+        critic = torch.tanh(self.critic_lin1(c)) #D
+        return actor, critic #E
+
+model = ActorCritic()
+
+CRITIC_LOSS_CONSTANT = 1
+FUTURE_DISCOUNT_FACTOR = 0.95
+
+learning_rate = 1e-4
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+optimizer.zero_grad()
 
 scores = []
+actor_losses = []
+critic_losses = []
+cumulative_losses = []
+actor_sum_weights = []
 
-
-def discount_rewards(rewards, gamma=0.99):
-    """
-    Discount the rewards for a series of rewards by a factor of gamma.
-    """
-    lenr = len(rewards)
-    # 1 * rewards, gamma ** 2 * rewards, gamma ** 3 * rewards
-    disc_return = torch.pow(gamma, torch.arange(lenr).float()) * rewards
-    # Normalize
-    disc_return /= disc_return.max()
-    return disc_return
-
-
-def loss_fn(preds, r):
-    return -1 * torch.sum(r * torch.log(preds))
 
 #endregion Neural Net
 
@@ -102,7 +134,7 @@ def loss_fn(preds, r):
 
 class CartPoleData:
     def __init__(self):
-        self.wind_seed = np.random.randint(1, 1000)
+        self.wind_seed = np.random.randint(1, 1000000)
         self.initial_angle = (0.5 - np.random.rand()) * 2 * 5
 
     def serialize(self):
@@ -113,7 +145,10 @@ class CartPoleData:
 
 #region Running Simulation
 
-def execute_epoch(sessions, sim_inst: UnityInstance):
+def execute_epoch(sessions, sim_inst: UnityInstance, learn=True):
+    """
+    learn: whether to perform gradient descent.
+    """
     # Send the session initialization data.
     serialize_v = np.vectorize(lambda c: json.dumps(c.serialize()))
     serializations = serialize_v(sessions["Initial Condition"].to_numpy())
@@ -122,15 +157,17 @@ def execute_epoch(sessions, sim_inst: UnityInstance):
     # Read the responses from the simulator and process them
     # this includes starting new sessions, reporting the final
     # scores of sessions, and data about the initial state of sessions.
-    read_simulator_responses(sessions, sim_inst)
+    experiences = read_simulator_responses(sessions, sim_inst)
+    # Perform gradient descent on the experiences that were had.
+    if learn:
+        gradient_descent_on_experiences(experiences)
     # By now "sessions" is updated to have the true scores from the read_simulator_responses thread.
     sorted_sessions = sessions.sort_values("Score", ascending=False)
-    print(f'Top Performers:\n{sorted_sessions.head(10)}')
 
     return sorted_sessions
 
 
-def read_simulator_responses(starting_conditions: pd.DataFrame, sim_inst: UnityInstance):
+def read_simulator_responses(starting_conditions: pd.DataFrame, sim_inst: UnityInstance) -> np.ndarray[Experience]:
     """
     Continuously reads the responses given by the simulator.
     Responds by making the agent choose actions.
@@ -141,9 +178,9 @@ def read_simulator_responses(starting_conditions: pd.DataFrame, sim_inst: UnityI
     # data and output actions for the running simulations.
     running_brains: dict[int, AgentBrain] = dict()
 
-    replay: ExperienceReplay = ExperienceReplay(1500, 500)  # TODO: include ways to specify hyperparameters.
+    experiences: list[np.ndarray[Experience]] = []
 
-    with tqdm(range(starting_conditions.shape[0])) as progress:
+    with tqdm(range(starting_conditions.shape[0]), desc='Sessions', leave=False) as progress:
         while True:
             line = sim_inst.read_line()
 
@@ -167,7 +204,8 @@ def read_simulator_responses(starting_conditions: pd.DataFrame, sim_inst: UnityI
                     # If this is a score, the session has ended.
                     # We can perform gradient descent.
                     starting_conditions.loc[index, "Score"] = score
-                    running_brains[index].on_session_end(replay)
+                    _experiences = running_brains[index].on_session_end(score)
+                    experiences.append(_experiences)
                     del running_brains[index]
                     progress.update(1)
                 else:
@@ -184,6 +222,64 @@ def read_simulator_responses(starting_conditions: pd.DataFrame, sim_inst: UnityI
                 # Otherwise, a session is starting execution.
                 index = int(line_split[0])
                 running_brains[index] = AgentBrain(starting_conditions.loc[index, "Initial Condition"], index)
+    # Return all the experiences from this epoch.
+    return np.concatenate(experiences)
+
+
+def gradient_descent_on_experiences(experiences: np.ndarray[Experience]) -> None:
+    # Get the returns (stored where the rewards were previously stored).
+    returns = torch.stack(tuple(Experience.v_get_reward(experiences))).view(-1)
+    returns = F.normalize(returns, dim=0)
+    # Get the in states from the experience.
+    states_in = torch.stack(tuple(Experience.v_get_state_in(experiences))).detach()
+    # Get the actions that were chosen during the experience.
+    actions = torch.tensor(tuple(Experience.v_get_action(experiences)), dtype=torch.int32).view(-1).detach()
+    # Get the probability of the chosen actions for the current actor.
+    action_probabilities, state_values = model(states_in.detach())
+    action_probabilities = action_probabilities.gather(dim=1, index=actions.long().view(-1, 1)).squeeze()
+    # Get the predicted value of the states for the current critic.
+    state_values = state_values.squeeze()
+
+    # Forces actions that performed better than expected to increase in probability.
+    # Actions that performed worse than expected decrease in probability.
+
+    # Note: The loss function given in Deep Reinforcement Learning in Action is different
+    # from the one used here. In that book -1 * logprob * (return - learned_state_value) is used.
+    # Here, -1 is applied only when return - learned_state_value > 0, and otherwise, the logprob
+    # is replaced with log(1 - prob).
+    # This always results in positive loss while inscentivising going towards 0 or 1 depending on
+    # whether we overestimated or underestimated the value of the state.
+
+    advantage = returns - state_values.detach()
+    """
+    underestimated_advantage = advantage > 0
+    overestimated_advantage = ~underestimated_advantage
+    underestimated_loss = (-1 * torch.log(action_probabilities[underestimated_advantage]) * (
+    advantage[underestimated_advantage])).sum()
+    overestimated_loss = (torch.log(1 - action_probabilities[overestimated_advantage]) * (
+    advantage[overestimated_advantage])).sum()
+
+    actor_loss = (underestimated_loss + overestimated_loss) # / advantage.shape[0]
+    """
+    actor_loss = -1 * (torch.log(action_probabilities) * advantage).sum()
+    actor_losses.append(actor_loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
+    # Squared Errors. Similar to linear regression.
+    critic_loss = torch.pow(state_values - returns, 2).sum()  #.mean()
+    critic_losses.append(critic_loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
+    # Cumulative loss.
+    loss = actor_loss + CRITIC_LOSS_CONSTANT * critic_loss
+    cumulative_losses.append(loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
+    # Sum of Model Weights
+    actor_weights = 0
+    for param in model.parameters():
+        actor_weights += param.data.sum().detach()
+    actor_sum_weights.append(actor_weights)
+
+    # Backwards Propagation.
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    optimizer.zero_grad()
 
 #region Brain Control
 
@@ -192,6 +288,7 @@ class AgentBrain:
         self._session_init = session_initialization_data
         self._session_index = index
         self._data_count = 0
+        self._running_score = 0  # The last known score of this agent.
 
         self.last_state_action = None
         self.transitions = []
@@ -203,15 +300,21 @@ class AgentBrain:
         be sent.
         """
         self._data_count += 1
-        input, score = AgentBrain._extract_frame_data(frame_data)
+        state, score = AgentBrain._extract_frame_data(frame_data)
+        state = torch.from_numpy(state).float()
+        # We need to know the change in score (reward) for actor-critic learning.
+        reward = score - self._running_score
+        # Update the running score for the next action.
+        self._running_score = score
 
-        act_prob = model(torch.from_numpy(input).float())
+        # Choose an action using softmax.
+        act_prob, state_value = model(state)
         action = np.random.choice(np.array([0, 1]), p=act_prob.data.numpy())
 
         if not self.last_state_action is None:
-            self.transitions += [(self.last_state_action[0], self.last_state_action[1], score)]
+            self.transitions.append((*self.last_state_action, state, reward))
 
-        self.last_state_action = input, action
+        self.last_state_action = state, state_value, action, act_prob[action]
 
         return json.dumps({'MoveRight': bool(action == 0)})
 
@@ -225,50 +328,55 @@ class AgentBrain:
             data['CartPosition'],
             data['CartVelocity'],
             data['PoleAngle'],
-            data['PoleAngularVelocity'],
-            data['NormalizedWind']
+            data['PoleAngularVelocity']#,
+            #data['NormalizedWind']
         ]), data['Score']
 
-    def on_session_end(self, replay: ExperienceReplay):
+    def on_session_end(self, score) -> np.ndarray[Experience]:
         """
         When a session has ended, gather all the rewards, states, and actions, and perform
         gradient descent.
-        """
-        ep_len = len(self.transitions)
-        scores.append(ep_len)
-        # Isolate the rewards.
-        reward_batch = torch.Tensor([r for (s, a, r) in self.transitions])
-        # Reverse the rewards so that the earliest actions are rewarded the most, while later actions are not rewarded as much.
-        # Apply a future discount based on a decay rate of gamma (0.99).
-        disc_returns = discount_rewards(reward_batch.flip(dims=(0,)))
-        # Isolate the states.
-        state_batch = torch.Tensor([s for (s, a, r) in self.transitions])
-        # Isolate teh actions.
-        action_batch = torch.Tensor([a for (s, a, r) in self.transitions])
 
+        learn: whether to do any learning.
         """
-        # Run gradient descent on results.
-        # Predict actions, independently of the actions that were actually taken.
-        pred_batch = model(state_batch)
-        # Get the probabilities of actions that were previously taken.
-        prob_batch = pred_batch.gather(dim=1, index=action_batch.long().view(-1, 1)).squeeze()
-        # Calculate the loss for the new probabilities of old actions.
-        loss = loss_fn(prob_batch, disc_returns)  # TODO: Make loss function an argument.
 
-        # Perform Gradient Descent
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        """
+        # TODO: See if we need this last step.
+        _last_reward = score - self._running_score
+        self._running_score = score
+        self.transitions += [(
+            *self.last_state_action,  # Prior state, prior state value, prior action.
+            self.last_state_action[0],  # TODO: See if having the starting and ending state be the same causes problems.
+            _last_reward
+        )]
+
+        # Add to the global list of scores. TODO: Don't make global.
+        scores.append(score)
 
         # Construct experiences for replay.
-        v_experience_constructor = np.vectorize(Experience, excluded="state_out", signature='(n),(),(),()->()')
-        experiences = v_experience_constructor(state_batch, action_batch, None, disc_returns)
+        experiences = np.fromiter(
+            itertools.starmap(Experience, self.transitions),
+            dtype=object,
+            count=len(self.transitions)
+        )  # TODO: use df instead of objects? maybe zip function?
 
-        # Add the experiences and try to replay.
-        replay.add_experiences(experiences)
-        # TODO: Uncomment
-        replay.replay_experiences(model)
+        # Calculate returns.
+        # Returns are like scores in that they're cumulative rewards, but with future discounting.
+        returns = []
+        _ret = torch.tensor([0])
+        for reward in reversed(Experience.v_get_reward(experiences)):
+            _ret = reward + FUTURE_DISCOUNT_FACTOR * _ret
+            returns.insert(0, _ret.detach())
+
+        returns = torch.stack(tuple(returns)).view(-1)
+        returns = F.normalize(returns, dim=0)
+
+
+        # Replace experience rewards with returns.
+        for i in range(experiences.shape[0]):
+            experiences[i].reward = returns[i]
+
+        return experiences
+
 
 #endregion Brain Control
 
@@ -277,42 +385,70 @@ class AgentBrain:
 class Experience:
     def __init__(
             self,
-            state_in: torch.Value,
+            state_in: torch.Tensor,
+            state_in_value: torch.Value,
             action: torch.Value,
-            state_out: torch.Value,
+            action_probability: torch.Value,
+            state_out: torch.Tensor,
             reward: torch.Value
     ):
         self.state_in = state_in
+        self.state_in_value = state_in_value
         self.action = action
+        self.action_probability = action_probability  # The probability that self.action was taken.
         self.state_out = state_out
         self.reward = reward
 
-    def get_state_in(self) -> torch.Value:
+    def get_state_in(self) -> torch.Tensor:
         return self.state_in
+
+    def get_state_in_value(self) -> torch.Value:
+        return self.state_in_value
 
     def get_action(self) -> torch.Value:
         return self.action
 
-    def get_state_out(self) -> torch.Value:
+    def get_action_probability(self) -> torch.Value:
+        return self.action_probability
+
+    def get_state_out(self) -> torch.Tensor:
         return self.state_out
 
     def get_reward(self) -> torch.Value:
         return self.reward
 
-    def get_all(self) -> tuple[torch.Value, torch.Value, torch.Value, torch.Value]:
-        return self.state_in, self.action, self.state_out, self.reward
+    def get_all(self) -> tuple[torch.Tensor, torch.Value, torch.Value, torch.Value, torch.Tensor, torch.Value]:
+        return self.state_in, self.state_in_value, self.action, self.action_probability, self.state_out, self.reward
 
     # Vectorized Getters
-    v_get_state_in: Callable[[Iterable[Experience]], Iterable[torch.Value]] = np.vectorize(
+    v_get_state_in: Callable[[Iterable[Experience]], Iterable[torch.Tensor]] = np.vectorize(
         get_state_in,
-        signature='()->(n)'
+        otypes=[object]
     )
-    v_get_action: Callable[[Iterable[Experience]], Iterable[torch.Value]] = np.vectorize(get_action)
-    v_get_state_out: Callable[[Iterable[Experience]], Iterable[torch.Value]] = np.vectorize(get_state_out)
-    v_get_reward: Callable[[Iterable[Experience]], Iterable[torch.Value]] = np.vectorize(get_reward)
-    v_get_all: Callable[[Iterable[Experience]], Iterable[Iterable[torch.Value]]] = np.vectorize(
-        get_all,
-        signature='()->(n),(),(),()'  # TODO: Change 3rd output to n when state is not None.
+    v_get_state_in_value: Callable[[Iterable[Experience]], Iterable[torch.Value]] = np.vectorize(
+        get_state_in_value,
+        otypes=[object]
+    )
+    v_get_action: Callable[[Iterable[Experience]], Iterable[torch.Value]] = np.vectorize(
+        get_action,
+        otypes=[object]
+    )
+    v_get_action_probability: Callable[[Iterable[Experience]], Iterable[torch.Value]] = np.vectorize(
+        get_action_probability,
+        otypes=[object]
+    )
+    v_get_state_out: Callable[[Iterable[Experience]], Iterable[torch.Tensor]] = np.vectorize(
+        get_state_out,
+        otypes=[object]
+    )
+    v_get_reward: Callable[[Iterable[Experience]], Iterable[torch.Value]] = np.vectorize(
+        get_reward,
+        otypes=[object]
+    )
+    v_get_all: Callable[[Iterable[Experience]], Iterable[Iterable[torch.Value | torch.Tensor]]] = np.vectorize(
+        get_all#,
+        #otypes=[object, object, object, object],
+        #signature='()->(),(),(),(),()'
     )
 
 
@@ -335,39 +471,61 @@ class ExperienceReplay:  # TODO: Include locks for parallelization.
         """
         self.replay.extend(experiences)
 
-    def replay_experiences(self, model: Callable) -> None:
+    def replay_experiences(self, model: Callable, critic: Callable) -> None:
         """
         Trains the agent by replaying a random batch of experiences.
         """
 
         # Get a random batch of experiences.
-        random_mini_batch = random.sample(self.replay, min(self.mini_batch_size, len(self.replay)))
-        # Separate the experiences out by parts.
-        states_in, actions, states_out, rewards = Experience.v_get_all(random_mini_batch)
+        _batch_size = min(self.mini_batch_size, len(self.replay))
+        random_mini_batch = random.sample(self.replay, _batch_size)
 
-        # Convert to tensors.
-        states_in = torch.Tensor(states_in)
-        actions = torch.Tensor(actions)
-        # TODO: Remove. Kept for completeness.
-        # states_out = torch.Tensor(states_out)
-        rewards = torch.Tensor(rewards)
+        # Assumes rewards have been converted to returns.
+        returns = torch.stack(tuple(Experience.v_get_reward(random_mini_batch)))
+        # Get the in states from the experience.
+        states_in = torch.stack(tuple(Experience.v_get_state_in(random_mini_batch))).detach()
+        # Get the actions that were chosen during the experience.
+        actions = torch.tensor(tuple(Experience.v_get_action(random_mini_batch)), dtype=torch.int32).view(-1).detach()
+        # Get the probability of the chosen actions for the current actor.
+        action_probabilities = model(states_in.detach()).gather(dim=1, index=actions.long().view(-1, 1)).squeeze()
+        # Get the predicted value of the states for the current critic.
+        state_values = critic(states_in.detach()).squeeze()
 
-        # Predict actions, independently of the actions that were actually taken.
-        pred_batch = model(states_in)
-        # Get the probabilities of actions that were previously taken.
-        prob_batch = pred_batch.gather(dim=1, index=actions.long().view(-1, 1)).squeeze()
-        # Calculate the loss for the new probabilities of old actions.
-        # If the old action was bad, and we have a low probability for it, the probability should not change.
-        # If the old action was good, and we have a low probability for it, the probability should change.
-        # If the old action was bad, and we have a high probability for it, the probability should change.
-        # If the old action was good, and we have a high probability for it, the probability should not change.
-        loss = loss_fn(prob_batch, rewards)  # TODO: Make loss function an argument.
+        # Forces actions that performed better than expected to increase in probability.
+        # Actions that performed worse than expected decrease in probability.
+        # TODO: Using pow forces each loss to be >= 0, but always inscentivises the action_prob to be 1 (log(1) == 0).
+        #  Figure out a way to get always positive loss while inscentivising going towards 0 or 1.
+        #  Maybe -1 * log(prob) when (return - state_value) > 0 and -1 * log(1 - prob) otherwise?
+        advantage = returns - state_values.detach()
 
-        # Perform Gradient Descent
+        underestimated_advantage = advantage > 0
+        overestimated_advantage = ~underestimated_advantage
+        underestimated_loss = (-1 * torch.log(action_probabilities[underestimated_advantage]) * (
+        advantage[underestimated_advantage])).sum()
+        overestimated_loss = (torch.log(1 - action_probabilities[overestimated_advantage]) * (
+        advantage[overestimated_advantage])).sum()
+
+        actor_loss = underestimated_loss + overestimated_loss
+        actor_losses.append(actor_loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
+        # Mean Squared Errors. Same as linear regression.
+        critic_loss = torch.pow(state_values - returns, 2).sum()
+        critic_losses.append(critic_loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
+        # Cumulative loss.
+        loss = actor_loss + CRITIC_LOSS_CONSTANT * critic_loss
+        cumulative_losses.append(loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
+        # Sum of Model Weights
+        actor_weights = 0
+        critic_weights = 0
+        for param in model.parameters():
+            actor_weights += param.data.sum().detach()
+        for param in critic.parameters():
+            critic_weights += param.data.sum().detach()
+
+
+        # Backwards Propagation.
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-
 
 
 #endregion Experience Replay
@@ -376,9 +534,9 @@ def save_onnx():
     """
     Save the cart pole agent as an onnx file.
     """
-    random_input = torch.rand((l1,), dtype=torch.float32)
+    random_input = torch.rand((4,), dtype=torch.float32)
     filename = f'cart_pole_agent.onnx'
-    torch.onnx.export(model, random_input, filename, input_names=['input'], output_names=['output'])
+    torch.onnx.export(model, random_input, filename, input_names=['input'], output_names=['output', 'state_value'])
     return filename
 
 def display_performance():
@@ -396,7 +554,11 @@ def display_performance():
 
     for i in range(5):
         display_sim_inst.run_experiment('cart_pole')
-        execute_epoch(pd.DataFrame([[CartPoleData(), 0]], columns=["Initial Condition", "Score"]), display_sim_inst)
+        execute_epoch(
+            pd.DataFrame([[CartPoleData(), 0]], columns=["Initial Condition", "Score"]),
+            display_sim_inst,
+            learn=False  # Display should not change the model.
+        )
 
     display_sim_inst.quit()
 
@@ -407,19 +569,16 @@ if __name__ == "__main__":
     # Parse Arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", help="if this flag is passed, don't run the Unity executable.", action="store_false")
-    parser.add_argument("-e", help="number of epochs that should be run.", type=int, default=1)
+    parser.add_argument("-e", help="number of epochs that should be run.", type=int, default=64)
+    parser.add_argument("-s", hel="number of sessions per epoch.", type=int, default=16)
     parser.add_argument("-display", help="if this flag is passed, display the agent's performance after training.", action="store_true")
     parser.add_argument("-stats", help="what types of statistics to show.", type=int, default=0)
     args = parser.parse_args()
     RUN_EXECUTABLE = args.t
     EPOCH_COUNT = args.e
+    SESSIONS_PER_EPOCH = args.s
     DISPLAY_PERFORMANCE = args.display
     STATS = args.stats
-
-    # Create the initial states of the sessions.
-    sessions = pd.DataFrame(columns=["Initial Condition", "Score"])
-    for i in range(1024 * 4):
-        sessions.loc[len(sessions.index)] = [CartPoleData(), 0]
 
     if STATS > 0:
         avg_performance_per_epoch = [0]
@@ -435,12 +594,20 @@ if __name__ == "__main__":
     else:
         print(f"Connecting to Simulator without subprocess")
 
-    for i in range(EPOCH_COUNT):
-        print(f"\nEpoch {i + 1}")
-        sim_inst.run_experiment("cart_pole")
-        execute_epoch(sessions, sim_inst)
-        if STATS > 0:
-            avg_performance_per_epoch.append(np.mean(sessions.head(10)["Score"]))
+    with tqdm(range(EPOCH_COUNT), desc='Epochs') as progress:
+        for i in progress:
+            # Create the initial states of the sessions.
+            sessions = pd.DataFrame(columns=["Initial Condition", "Score"])
+            for i in range(SESSIONS_PER_EPOCH):
+                sessions.loc[len(sessions.index)] = [CartPoleData(), 0]
+
+            sim_inst.run_experiment("cart_pole")
+            execute_epoch(sessions, sim_inst)
+
+            avg_score = np.mean(sessions["Score"])
+            progress.set_postfix_str(f'Last Mean Score: {avg_score}')
+            if STATS > 0:
+                avg_performance_per_epoch.append(avg_score)
 
     sim_inst.quit()
 
@@ -448,13 +615,31 @@ if __name__ == "__main__":
 
     if STATS > 0:
         ax = plt.subplot(1, 1, 1)
-        plt.title(f"Performance over Epochs")
+        plt.title(f"Performance over Sessions")
         plt.ylabel(f"Score")
-        plt.xlabel(f"Epoch (first epoch at 1)")
-        plt.plot(np.arange(1, 1024 * 4 + 1, 1), scores)
+        plt.xlabel(f"Session (first session at 1)")
+        plt.plot(np.arange(1, SESSIONS_PER_EPOCH * EPOCH_COUNT + 1, 1), scores)
         ax.grid()
 
         plt.show()
+
+    if STATS > 1:
+        plot_data = [
+            ('Actor', 'Loss', actor_losses),
+            ('Critic', 'Loss', critic_losses),
+            ('Cumulative', 'Loss', cumulative_losses),
+            ('Actor', 'Sum Weights', actor_sum_weights)
+        ]
+
+        for label, label_type, data in plot_data:
+            ax = plt.subplot(1, 1, 1)
+            plt.title(f"{label} {label_type} over Epochs")
+            plt.ylabel(label_type)
+            plt.xlabel(f"Epoch (first session at 1)")
+            plt.plot(np.arange(1, EPOCH_COUNT + 1, 1), data)
+            ax.grid()
+
+            plt.show()
 
     if DISPLAY_PERFORMANCE:
         display_performance()
