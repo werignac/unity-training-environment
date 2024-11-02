@@ -54,6 +54,7 @@ MonoBehaviour:
   cartLimit: 5
   pole: {fileID: 7006741812253672311}
   cart: {fileID: 1091201651675593353}
+  lossPenalty: 10
 --- !u!171741748 &7644093367911885124
 ArticulationBody:
   m_ObjectHideFlags: 0
@@ -133,7 +134,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   perlinStepMultiplier: 0.2
-  maxConveyorSpeed: 2
+  maxConveyorSpeed: 0
   cart: {fileID: 1091201651675593353}
   onConveyorUpdate:
     m_PersistentCalls:

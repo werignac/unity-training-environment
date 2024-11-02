@@ -39,6 +39,10 @@ namespace werignac.CartPole
 		[SerializeField]
 		private ArticulationBody cart;
 
+		[Header("Scoring")]
+		[SerializeField, Min(0)]
+		private int lossPenalty = 10;
+
 		/// <summary>
 		/// Running score. +1 for each frame without losing.
 		/// </summary>
@@ -48,13 +52,18 @@ namespace werignac.CartPole
 		{
 			terminateEarly = false;
 
-			score += 1;
+			bool exceedingAngleLimit = Mathf.Abs(pole.jointPosition[0] * Mathf.Rad2Deg) > angleLimit;
+			bool exceedingTranslationLimit = Mathf.Abs(cart.transform.position.z) > cartLimit;
 
-			if (Mathf.Abs(pole.jointPosition[0] * Mathf.Rad2Deg) > angleLimit)
+			if (exceedingAngleLimit || exceedingTranslationLimit)
+			{
 				terminateEarly = true;
-
-			if (Mathf.Abs(cart.transform.position.z) > cartLimit)
-				terminateEarly = true;
+				score -= lossPenalty;
+			}
+			else
+			{
+				score += 1;
+			}
 
 			return score;
 		}
