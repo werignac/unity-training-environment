@@ -58,8 +58,8 @@ def extract_frame_data(data: dict):
         data['CartPosition'],
         data['CartVelocity'],
         data['PoleAngle'],
-        data['PoleAngularVelocity']  # ,
-        # data['NormalizedWind']
+        data['PoleAngularVelocity'],
+        data['NormalizedWind']
     ]), data['Score']
 
 
@@ -72,10 +72,21 @@ class CartPoleData:
         return {"WindSeed": self.wind_seed,
                 "InitialAngle": self.initial_angle}
 
+
+
+def save_onnx(model):
+    """
+    Save the cart pole agent as an onnx file.
+    """
+    random_input = torch.rand((5,), dtype=torch.float32)
+    filename = f'cart_pole_agent.onnx'
+    torch.onnx.export(model, random_input, filename, input_names=['input'], output_names=['output', 'state_value'])
+    return filename
+
 class ActorCritic(nn.Module): #B
     def __init__(self):
         super(ActorCritic, self).__init__()
-        self.l1 = nn.Linear(4,25)
+        self.l1 = nn.Linear(5,25)
         self.l2 = nn.Linear(25,50)
         self.actor_lin1 = nn.Linear(50,2)
         self.l3 = nn.Linear(50,25)
@@ -301,3 +312,5 @@ if __name__ == "__main__":
                     env.flush_pipe()
 
     env.quit()
+
+    save_onnx(MasterNode)
