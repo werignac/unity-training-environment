@@ -5,11 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e854dc44-5fa2-4a5c-8c10-3aec83617281" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/training_cart_pole_2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Prefabs/Simulation Sessions/CartPole.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Prefabs/Simulation Sessions/CartPole.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Prefabs/Simulation Sessions/Demo Agents/CartPoleDemo2.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Prefabs/Simulation Sessions/Demo Agents/CartPoleDemo2.prefab" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleEvaluator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/UnityRLEnvironment/Assets/Scripts/Experiments/CartPole/CartPoleEvaluator.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/cart_pole_agent.onnx" beforeDir="false" afterPath="$PROJECT_DIR$/src/cart_pole_agent.onnx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/training_cart_pole.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/training_cart_pole.py" afterDir="false" />
     </list>
@@ -17,6 +14,13 @@
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -47,7 +51,7 @@
       <recent name="D:\SoloProjects\CreatureEvolution\src" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.training_cart_pole">
+  <component name="RunManager" selected="Python.training_cart_pole_2">
     <configuration name="falling_rectangular_prism" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="CreatureEvolution" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -86,7 +90,30 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/training_cart_pole.py" />
-      <option name="PARAMETERS" value="-stats 2 -display" />
+      <option name="PARAMETERS" value="-stats 2 -display -e 64" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="training_cart_pole_2" type="PythonConfigurationType" factoryName="Python">
+      <module name="CreatureEvolution" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="UNITY_SIMULATOR_PATH" value="D:\SoloProjects\CreatureEvolution\UnityRLEnvironment\Builds\2024-10-30_16-38_No_Conveyor\UnityRLEnvironment.exe" />
+      </envs>
+      <option name="SDK_HOME" value="D:\SoloProjects\CreatureEvolutionVenv\Scripts\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/training_cart_pole_2.py" />
+      <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -140,6 +167,7 @@
     </configuration>
     <list>
       <item itemvalue="Python.training_cart_pole" />
+      <item itemvalue="Python.training_cart_pole_2" />
       <item itemvalue="Python.falling_rectangular_prism" />
       <item itemvalue="Python.training_cart_pole_3d" />
       <item itemvalue="Python.two_part_crawling_creature" />
@@ -196,7 +224,14 @@
       <workItem from="1730344302179" duration="487000" />
       <workItem from="1730400206305" duration="6188000" />
       <workItem from="1730576028025" duration="100000" />
-      <workItem from="1730578118493" duration="2804000" />
+      <workItem from="1730578118493" duration="17066000" />
+      <workItem from="1730598020991" duration="79000" />
+      <workItem from="1730598405809" duration="13000" />
+      <workItem from="1730599018152" duration="331000" />
+      <workItem from="1730599710663" duration="953000" />
+      <workItem from="1730675397827" duration="31000" />
+      <workItem from="1730676821406" duration="32000" />
+      <workItem from="1730677361438" duration="3396000" />
     </task>
     <servers />
   </component>
@@ -215,7 +250,8 @@
     </option>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole.coverage" NAME="training_cart_pole Coverage Results" MODIFIED="1730581066769" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole.coverage" NAME="training_cart_pole Coverage Results" MODIFIED="1730600414222" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole_2.coverage" NAME="training_cart_pole_2 Coverage Results" MODIFIED="1730680088881" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/CreatureEvolution$two_part_crawling_creature.coverage" NAME="two_part_crawling_creature Coverage Results" MODIFIED="1725310398835" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/CreatureEvolution$training_cart_pole_3d.coverage" NAME="training_cart_pole_3d Coverage Results" MODIFIED="1723262990916" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
     <SUITE FILE_PATH="coverage/CreatureEvolution$falling_rectangular_prism.coverage" NAME="falling_rectangular_prism Coverage Results" MODIFIED="1725312539334" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />

@@ -43,6 +43,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import random
+import torch.multiprocessing as mp
 
 from collections import deque
 from collections.abc import Callable, Iterable
@@ -57,43 +58,15 @@ from unity_instance import UnityInstance
 #region Statics
 
 PIPE_PATH = '\\\\.\\pipe\\'
-PIPE_NAME = "PipeB"
 SIMULATOR_PATH = os.environ["UNITY_SIMULATOR_PATH"]
-DISPLAY_SIMULATOR_ARGS = ["-p", PIPE_NAME]
-SIMULATOR_ARGS = ["-batchmode", "-nographics"] + DISPLAY_SIMULATOR_ARGS
-CREATURE_PIPE_PREFIX = "Pipe"
+SIMULATOR_ARGS = ["-batchmode", "-nographics"]
+
+def pipe_name(pipe_number: int) -> str:
+    return f"Unity_Training_Pipe_{pipe_number}"
 
 #endregion Statics
 
 #region Neural Net
-
-
-"""
-l1 = 4
-l2 = 25
-l3 = 50
-l4 = 25
-
-model = torch.nn.Sequential(
-    torch.nn.Linear(l1, l2),
-    torch.nn.LeakyReLU(),
-    torch.nn.Linear(l2, l3),
-    torch.nn.LeakyReLU(),
-    torch.nn.Linear(l3, 2),
-    torch.nn.Softmax(dim=0)
-)
-
-critic = torch.nn.Sequential(
-    torch.nn.Linear(l1, l2),
-    torch.nn.LeakyReLU(),
-    torch.nn.Linear(l2, l3),
-    torch.nn.LeakyReLU(),
-    torch.nn.Linear(l3, l4),
-    torch.nn.LeakyReLU(),
-    torch.nn.Linear(l4, 1),
-    torch.nn.Tanh()
-)
-"""
 
 class ActorCritic(nn.Module): #B
     def __init__(self):
@@ -107,26 +80,13 @@ class ActorCritic(nn.Module): #B
         x = F.normalize(x,dim=0)
         y = F.relu(self.l1(x))
         y = F.relu(self.l2(y))
-        actor = F.softmax(self.actor_lin1(y),dim=0) #C
+        actor = F.log_softmax(self.actor_lin1(y),dim=0) #C
         c = F.relu(self.l3(y.detach()))
         critic = torch.tanh(self.critic_lin1(c)) #D
         return actor, critic #E
 
-model = ActorCritic()
-
-CRITIC_LOSS_CONSTANT = 1
+CRITIC_LOSS_CONSTANT = 0.1
 FUTURE_DISCOUNT_FACTOR = 0.95
-
-learning_rate = 1e-4
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-optimizer.zero_grad()
-
-scores = []
-actor_losses = []
-critic_losses = []
-cumulative_losses = []
-actor_sum_weights = []
-
 
 #endregion Neural Net
 
@@ -145,44 +105,158 @@ class CartPoleData:
 
 #region Running Simulation
 
-def execute_epoch(sessions, sim_inst: UnityInstance, learn=True):
+class Worker:
     """
-    learn: whether to perform gradient descent.
-    """
-    # Send the session initialization data.
-    serialize_v = np.vectorize(lambda c: json.dumps(c.serialize()))
-    serializations = serialize_v(sessions["Initial Condition"].to_numpy())
-    sim_inst.send_session_initialization_data(serializations)
-    sim_inst.end_send_session_initialization_data()
-    # Read the responses from the simulator and process them
-    # this includes starting new sessions, reporting the final
-    # scores of sessions, and data about the initial state of sessions.
-    experiences = read_simulator_responses(sessions, sim_inst)
-    # Perform gradient descent on the experiences that were had.
-    if learn:
-        gradient_descent_on_experiences(experiences)
-    # By now "sessions" is updated to have the true scores from the read_simulator_responses thread.
-    sorted_sessions = sessions.sort_values("Score", ascending=False)
-
-    return sorted_sessions
-
-
-def read_simulator_responses(starting_conditions: pd.DataFrame, sim_inst: UnityInstance) -> np.ndarray[Experience]:
-    """
-    Continuously reads the responses given by the simulator.
-    Responds by making the agent choose actions.
-    When a session has finished, puts the results into a replay buffer and performs gradient descent.
+    A class that handles simulation and training on one of many subprocesses.
     """
 
-    # Mapping of session indexes to running brains. The brains take in simulation frame
-    # data and output actions for the running simulations.
-    running_brains: dict[int, AgentBrain] = dict()
+    def __init__(
+            self,
+            sim_args: tuple,
+            sim_kwargs: dict,
+            seed: int,
+            simulator_instance: UnityInstance | None = None,
+            quit_simulator_on_close: bool = True
+    ):
+        """
+        model: the model to train or use to take actions.
+        sim_args: args for creating a UnityInstance if none is provided (default behaviour).
+        sim_kwargs: kwargs for creating a UnityInstance if none is provided (default behaviour).
+        seed: a seed used to initialize rngs.
+        simulator_instance: the UnityInstance to communicate with. None is provided by default.
+        Worker will always close its UnityInstance when exiting a with statement, regardless of how
+        the UnityInstance was provided.
+        """
 
-    experiences: list[np.ndarray[Experience]] = []
+        self.model: ActorCritic | None = None
+        self.sim_args = sim_args, sim_kwargs
+        self.seed = seed
+        self.quit_simulator_on_close = quit_simulator_on_close
 
-    with tqdm(range(starting_conditions.shape[0]), desc='Sessions', leave=False) as progress:
+        self.optimizer: torch.optim.Optimizer | None = None
+        self.simulator_instance: UnityInstance | None = simulator_instance
+
+        # Stats for plotting.
+        self.actor_losses: list | None = None
+        self.critic_losses: list | None = None
+        self.cumulative_losses: list | None = None
+        self.actor_sum_weights: list | None = None
+
+    def set_model(self, model: ActorCritic):
+        self.model = model
+
+    def __enter__(self) -> Worker:
+        """
+        Sets up fields that should be process-local.
+        - Optimizer
+        - Simulator
+        - RNGs
+        """
+        # Set up the optimizer.
+        self.optimizer = torch.optim.Adam(lr=1e-4, params=self.model.parameters())
+        self.optimizer.zero_grad()
+
+        # Set up the simulator.
+        if self.simulator_instance is None:
+            args, kwargs = self.sim_args
+            self.simulator_instance = UnityInstance(*args, **kwargs)
+
+        # Set up rngs.
+        random.seed(self.seed)
+        np.random.seed(random.randint(0, 100000))
+        torch.manual_seed(random.randint(0, 100000))
+
+        # Set up stat collectors.
+        self.actor_losses = []
+        self.critic_losses = []
+        self.cumulative_losses = []
+        self.actor_sum_weights = []
+
+        # Return self for enter.
+        return self
+
+    def _generate_sessions(self, session_count: int) -> pd.DataFrame:
+        """
+        Generates n session initialization objects and puts them into
+        a dataframe with two columns. The first is the objects ("Initial Condition");
+        the second is where the score will go ("Score"), which is initialized to zero.
+        """
+        # Generate random sessions.
+        sessions = []
+        for i in range(session_count):
+            sessions.append(CartPoleData())
+        scores = np.zeros(session_count)
+        # Put altogether into a dataframe.
+        return pd.DataFrame(zip(sessions, scores), columns=["Initial Condition", "Score"])
+
+    def _gradient_descent_on_experiences(self, experiences: np.ndarray[Experience]) -> None:
+        # Get the returns (stored where the rewards were previously stored).
+        returns = torch.stack(tuple(Experience.v_get_reward(experiences))).view(-1)
+        # Get the in states from the experience.
+        states_in = torch.stack(tuple(Experience.v_get_state_in(experiences))).detach()
+        # Get the actions that were chosen during the experience.
+        actions = torch.tensor(tuple(Experience.v_get_action(experiences)), dtype=torch.int32).view(-1).detach()
+        # Get the probability of the chosen actions for the current actor.
+        action_probabilities, state_values = self.model(states_in.detach())
+        action_probabilities = action_probabilities.gather(dim=1, index=actions.long().view(-1, 1)).squeeze()
+        # Get the predicted value of the states for the current critic.
+        state_values = state_values.squeeze()
+
+        # Forces actions that performed better than expected to increase in probability.
+        # Actions that performed worse than expected decrease in probability.
+
+        # Note: The loss function given in Deep Reinforcement Learning in Action is different
+        # from the one used here. In that book -1 * logprob * (return - learned_state_value) is used.
+        # Here, -1 is applied only when return - learned_state_value > 0, and otherwise, the logprob
+        # is replaced with log(1 - prob).
+        # This always results in positive loss while inscentivising going towards 0 or 1 depending on
+        # whether we overestimated or underestimated the value of the state.
+
+        advantage = returns - state_values.detach()
+        """
+        underestimated_advantage = advantage > 0
+        overestimated_advantage = ~underestimated_advantage
+        underestimated_loss = (-1 * torch.log(action_probabilities[underestimated_advantage]) * (
+        advantage[underestimated_advantage])).sum()
+        overestimated_loss = (torch.log(1 - action_probabilities[overestimated_advantage]) * (
+        advantage[overestimated_advantage])).sum()
+
+        actor_loss = (underestimated_loss + overestimated_loss) # / advantage.shape[0]
+        """
+        actor_loss = (-1 * action_probabilities * advantage).sum()
+        self.actor_losses.append(actor_loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
+        # Squared Errors. Similar to linear regression.
+        critic_loss = torch.pow(state_values - returns, 2).sum()
+        self.critic_losses.append(critic_loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
+        # Cumulative loss.
+        loss = actor_loss + CRITIC_LOSS_CONSTANT * critic_loss
+        self.cumulative_losses.append(loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
+        # Sum of Model Weights
+        actor_weights = 0
+        for param in self.model.parameters():
+            actor_weights += param.data.sum().detach().numpy()
+        self.actor_sum_weights.append(actor_weights)
+
+        # Backwards Propagation.
+        loss.backward()
+        self.optimizer.step()
+
+        # Set up optimizer for next gradient TODO: Figure out a way to reset gradients while having multiple concurrent simulations.
+        self.optimizer.zero_grad()
+
+    def _read_simulator_responses(self, starting_conditions: pd.DataFrame, learn: bool):
+        """
+        Continuously reads the responses given by the simulator.
+        Responds by making the agent choose actions.
+        When a session has finished, puts the results into a replay buffer and performs gradient descent.
+        """
+
+        # Mapping of session indexes to running brains. The brains take in simulation frame
+        # data and output actions for the running simulations.
+        running_brains: dict[int, AgentBrain] = dict()
+
         while True:
-            line = sim_inst.read_line()
+            line = self.simulator_instance.read_line()
 
             if line is None:
                 break
@@ -205,9 +279,9 @@ def read_simulator_responses(starting_conditions: pd.DataFrame, sim_inst: UnityI
                     # We can perform gradient descent.
                     starting_conditions.loc[index, "Score"] = score
                     _experiences = running_brains[index].on_session_end(score)
-                    experiences.append(_experiences)
+                    if learn:
+                        self._gradient_descent_on_experiences(_experiences)
                     del running_brains[index]
-                    progress.update(1)
                 else:
                     # Otherwise, if this is data about session in progress,
                     # give the running brain the new state and get the next
@@ -216,75 +290,73 @@ def read_simulator_responses(starting_conditions: pd.DataFrame, sim_inst: UnityI
                     command = brain.process_frame_data(json.loads(line_split[1]))
                     if not (command is None):
                         to_write = f"{index} {command}"
-                        sim_inst.write_line(to_write)
-                        sim_inst.flush_pipe()
+                        self.simulator_instance.write_line(to_write)
+                        self.simulator_instance.flush_pipe()
             else:
                 # Otherwise, a session is starting execution.
                 index = int(line_split[0])
-                running_brains[index] = AgentBrain(starting_conditions.loc[index, "Initial Condition"], index)
-    # Return all the experiences from this epoch.
-    return np.concatenate(experiences)
+                running_brains[index] = AgentBrain(starting_conditions.loc[index, "Initial Condition"], self.model, index)
+
+    def execute_epoch(self, session_count, learn=True) -> pd.DataFrame:
+        """
+        Runs an epoch of sessions
+
+        learn: whether to perform gradient descent.
+        """
+        # TODO: Figure out a way to leverage the simulator running multiple sessions at a time while reseting the gradient.
+        # Set up the simulator to run an experiment.
+        self.simulator_instance.run_experiment("cart_pole")
+
+        sessions = self._generate_sessions(session_count)
+        # Send the session initialization data.
+        serialize_v = np.vectorize(lambda c: json.dumps(c.serialize()))
+        serializations = serialize_v(sessions["Initial Condition"].to_numpy())
+        self.simulator_instance.send_session_initialization_data(serializations)
+        self.simulator_instance.end_send_session_initialization_data()
+        # Read the responses from the simulator and process them
+        # this includes starting new sessions, reporting the final
+        # scores of sessions, and data about the initial state of sessions.
+        # Perform gradient descent if learning.
+        self._read_simulator_responses(sessions, learn)
+
+        # By now "sessions" is updated to have the true scores from the read_simulator_responses thread.
+        sorted_sessions = sessions.sort_values("Score", ascending=False)
+
+        return sorted_sessions
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.simulator_instance is not None and self.quit_simulator_on_close:
+            try:
+                self.simulator_instance.quit()
+            except Exception as e:
+                print("The following exception occurred when closing a simulator instance. This may be caused by another error.")
+                print(e, end="\n\n")
+
+    def get_stats(self) -> tuple[list, list, list, list]:
+        """
+        Get list of actor losses, critic losses, cumulative losses, and sum of weights.
+        """
+        return self.actor_losses, self.critic_losses, self.cumulative_losses, self.actor_sum_weights
 
 
-def gradient_descent_on_experiences(experiences: np.ndarray[Experience]) -> None:
-    # Get the returns (stored where the rewards were previously stored).
-    returns = torch.stack(tuple(Experience.v_get_reward(experiences))).view(-1)
-    returns = F.normalize(returns, dim=0)
-    # Get the in states from the experience.
-    states_in = torch.stack(tuple(Experience.v_get_state_in(experiences))).detach()
-    # Get the actions that were chosen during the experience.
-    actions = torch.tensor(tuple(Experience.v_get_action(experiences)), dtype=torch.int32).view(-1).detach()
-    # Get the probability of the chosen actions for the current actor.
-    action_probabilities, state_values = model(states_in.detach())
-    action_probabilities = action_probabilities.gather(dim=1, index=actions.long().view(-1, 1)).squeeze()
-    # Get the predicted value of the states for the current critic.
-    state_values = state_values.squeeze()
+def worker_process(worker: Worker, model: ActorCritic, counter: mp.Value, epoch_count: int, return_queue: mp.Queue):
+    worker.set_model(model)
 
-    # Forces actions that performed better than expected to increase in probability.
-    # Actions that performed worse than expected decrease in probability.
+    scores = []
+    with worker:
+        for i in range(epoch_count):
+            session_results: pd.DataFrame = worker.execute_epoch(1, learn=True)
+            scores.append(session_results.iloc[0]["Score"])
+            counter.value = counter.value + 1
 
-    # Note: The loss function given in Deep Reinforcement Learning in Action is different
-    # from the one used here. In that book -1 * logprob * (return - learned_state_value) is used.
-    # Here, -1 is applied only when return - learned_state_value > 0, and otherwise, the logprob
-    # is replaced with log(1 - prob).
-    # This always results in positive loss while inscentivising going towards 0 or 1 depending on
-    # whether we overestimated or underestimated the value of the state.
+    statistics = (scores, *worker.get_stats())
+    return_queue.put(statistics)
 
-    advantage = returns - state_values.detach()
-    """
-    underestimated_advantage = advantage > 0
-    overestimated_advantage = ~underestimated_advantage
-    underestimated_loss = (-1 * torch.log(action_probabilities[underestimated_advantage]) * (
-    advantage[underestimated_advantage])).sum()
-    overestimated_loss = (torch.log(1 - action_probabilities[overestimated_advantage]) * (
-    advantage[overestimated_advantage])).sum()
-
-    actor_loss = (underestimated_loss + overestimated_loss) # / advantage.shape[0]
-    """
-    actor_loss = -1 * (torch.log(action_probabilities) * advantage).sum()
-    actor_losses.append(actor_loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
-    # Squared Errors. Similar to linear regression.
-    critic_loss = torch.pow(state_values - returns, 2).sum()  #.mean()
-    critic_losses.append(critic_loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
-    # Cumulative loss.
-    loss = actor_loss + CRITIC_LOSS_CONSTANT * critic_loss
-    cumulative_losses.append(loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
-    # Sum of Model Weights
-    actor_weights = 0
-    for param in model.parameters():
-        actor_weights += param.data.sum().detach()
-    actor_sum_weights.append(actor_weights)
-
-    # Backwards Propagation.
-    optimizer.zero_grad()
-    loss.backward()
-    optimizer.step()
-    optimizer.zero_grad()
 
 #region Brain Control
 
 class AgentBrain:
-    def __init__(self, session_initialization_data: CartPoleData, index: int):
+    def __init__(self, session_initialization_data: CartPoleData, model: ActorCritic, index: int):
         self._session_init = session_initialization_data
         self._session_index = index
         self._data_count = 0
@@ -292,6 +364,8 @@ class AgentBrain:
 
         self.last_state_action = None
         self.transitions = []
+
+        self.model = model
 
     def process_frame_data(self, frame_data: dict) -> str:
         """
@@ -308,15 +382,16 @@ class AgentBrain:
         self._running_score = score
 
         # Choose an action using softmax.
-        act_prob, state_value = model(state)
-        action = np.random.choice(np.array([0, 1]), p=act_prob.data.numpy())
+        logits, state_value = self.model(state)
+        logits = logits.view(-1)
+        action = torch.distributions.Categorical(logits=logits).sample()
 
         if not self.last_state_action is None:
             self.transitions.append((*self.last_state_action, state, reward))
 
-        self.last_state_action = state, state_value, action, act_prob[action]
+        self.last_state_action = state, state_value, action, logits[action]
 
-        return json.dumps({'MoveRight': bool(action == 0)})
+        return json.dumps({'MoveRight': bool(action.detach().numpy() == 0)})
 
     @staticmethod
     def _extract_frame_data(data: dict) -> tuple[np.ndarray, float]:
@@ -332,7 +407,7 @@ class AgentBrain:
             #data['NormalizedWind']
         ]), data['Score']
 
-    def on_session_end(self, score) -> np.ndarray[Experience]:
+    def on_session_end(self, score, learn: bool = True) -> np.ndarray[Experience]:
         """
         When a session has ended, gather all the rewards, states, and actions, and perform
         gradient descent.
@@ -348,9 +423,6 @@ class AgentBrain:
             self.last_state_action[0],  # TODO: See if having the starting and ending state be the same causes problems.
             _last_reward
         )]
-
-        # Add to the global list of scores. TODO: Don't make global.
-        scores.append(score)
 
         # Construct experiences for replay.
         experiences = np.fromiter(
@@ -369,7 +441,6 @@ class AgentBrain:
 
         returns = torch.stack(tuple(returns)).view(-1)
         returns = F.normalize(returns, dim=0)
-
 
         # Replace experience rewards with returns.
         for i in range(experiences.shape[0]):
@@ -451,83 +522,6 @@ class Experience:
         #signature='()->(),(),(),(),()'
     )
 
-
-class ExperienceReplay:  # TODO: Include locks for parallelization.
-    def __init__(
-            self,
-            saved_experiences_size: int = 10000,
-            mini_batch_size: int = 500
-    ):
-        # Queue of saved experiences.
-        self.replay: deque[Experience] = deque(maxlen=saved_experiences_size)
-        # How many experiences are picked out of the replay buffer when we want to do
-        self.mini_batch_size = mini_batch_size
-
-        assert self.mini_batch_size <= saved_experiences_size, f"Cannot sample more experiences than the amount saved. {self.mini_batch_size} <= {saved_experiences_size}"
-
-    def add_experiences(self, experiences: Iterable[Experience]) -> None:
-        """
-        Adds experiences to the experience replay buffer.
-        """
-        self.replay.extend(experiences)
-
-    def replay_experiences(self, model: Callable, critic: Callable) -> None:
-        """
-        Trains the agent by replaying a random batch of experiences.
-        """
-
-        # Get a random batch of experiences.
-        _batch_size = min(self.mini_batch_size, len(self.replay))
-        random_mini_batch = random.sample(self.replay, _batch_size)
-
-        # Assumes rewards have been converted to returns.
-        returns = torch.stack(tuple(Experience.v_get_reward(random_mini_batch)))
-        # Get the in states from the experience.
-        states_in = torch.stack(tuple(Experience.v_get_state_in(random_mini_batch))).detach()
-        # Get the actions that were chosen during the experience.
-        actions = torch.tensor(tuple(Experience.v_get_action(random_mini_batch)), dtype=torch.int32).view(-1).detach()
-        # Get the probability of the chosen actions for the current actor.
-        action_probabilities = model(states_in.detach()).gather(dim=1, index=actions.long().view(-1, 1)).squeeze()
-        # Get the predicted value of the states for the current critic.
-        state_values = critic(states_in.detach()).squeeze()
-
-        # Forces actions that performed better than expected to increase in probability.
-        # Actions that performed worse than expected decrease in probability.
-        # TODO: Using pow forces each loss to be >= 0, but always inscentivises the action_prob to be 1 (log(1) == 0).
-        #  Figure out a way to get always positive loss while inscentivising going towards 0 or 1.
-        #  Maybe -1 * log(prob) when (return - state_value) > 0 and -1 * log(1 - prob) otherwise?
-        advantage = returns - state_values.detach()
-
-        underestimated_advantage = advantage > 0
-        overestimated_advantage = ~underestimated_advantage
-        underestimated_loss = (-1 * torch.log(action_probabilities[underestimated_advantage]) * (
-        advantage[underestimated_advantage])).sum()
-        overestimated_loss = (torch.log(1 - action_probabilities[overestimated_advantage]) * (
-        advantage[overestimated_advantage])).sum()
-
-        actor_loss = underestimated_loss + overestimated_loss
-        actor_losses.append(actor_loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
-        # Mean Squared Errors. Same as linear regression.
-        critic_loss = torch.pow(state_values - returns, 2).sum()
-        critic_losses.append(critic_loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
-        # Cumulative loss.
-        loss = actor_loss + CRITIC_LOSS_CONSTANT * critic_loss
-        cumulative_losses.append(loss.detach().tolist())  # Used for plotting. TODO: Don't use statics.
-        # Sum of Model Weights
-        actor_weights = 0
-        critic_weights = 0
-        for param in model.parameters():
-            actor_weights += param.data.sum().detach()
-        for param in critic.parameters():
-            critic_weights += param.data.sum().detach()
-
-
-        # Backwards Propagation.
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-
 #endregion Experience Replay
 
 def save_onnx():
@@ -539,107 +533,158 @@ def save_onnx():
     torch.onnx.export(model, random_input, filename, input_names=['input'], output_names=['output', 'state_value'])
     return filename
 
+
 def display_performance():
     """
     Show the final cart pole agent playing 5 rounds.
     """
     display_exec_args = dict()
     display_exec_args["simulator_path"] = SIMULATOR_PATH
-    display_exec_args["simulator_args"] = DISPLAY_SIMULATOR_ARGS
+    display_exec_args["simulator_args"] = ["-p", pipe_name(0)]
 
     if RUN_EXECUTABLE:
-        display_sim_inst = UnityInstance(os.path.join(PIPE_PATH, PIPE_NAME), display_exec_args, no_timeout=True)
+        display_sim_inst = UnityInstance(os.path.join(PIPE_PATH, pipe_name(0)), display_exec_args, no_timeout=True)
     else:
         display_sim_inst = sim_inst
 
-    for i in range(5):
-        display_sim_inst.run_experiment('cart_pole')
-        execute_epoch(
-            pd.DataFrame([[CartPoleData(), 0]], columns=["Initial Condition", "Score"]),
-            display_sim_inst,
-            learn=False  # Display should not change the model.
-        )
+    worker = Worker(None, None, random.randint(0, 100000), display_sim_inst)
+    worker.set_model(model)
+    with worker:
+        for i in range(5):
+            worker.execute_epoch(1, learn=False)
 
-    display_sim_inst.quit()
 
 #endregion Running Simulation
 
 
 if __name__ == "__main__":
+    model = ActorCritic()
+    model.share_memory()
+
     # Parse Arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", help="if this flag is passed, don't run the Unity executable.", action="store_false")
-    parser.add_argument("-e", help="number of epochs that should be run.", type=int, default=64)
-    parser.add_argument("-s", hel="number of sessions per epoch.", type=int, default=16)
+    parser.add_argument("-e", help="number of epochs that should be run per process.", type=int, default=64)
     parser.add_argument("-display", help="if this flag is passed, display the agent's performance after training.", action="store_true")
     parser.add_argument("-stats", help="what types of statistics to show.", type=int, default=0)
     args = parser.parse_args()
     RUN_EXECUTABLE = args.t
     EPOCH_COUNT = args.e
-    SESSIONS_PER_EPOCH = args.s
     DISPLAY_PERFORMANCE = args.display
     STATS = args.stats
 
+    PROCESS_COUNT = 32 if RUN_EXECUTABLE else 1
+
     if STATS > 0:
         avg_performance_per_epoch = [0]
-
-    exec_args = dict()
-    exec_args["simulator_path"] = SIMULATOR_PATH
-    exec_args["simulator_args"] = SIMULATOR_ARGS
-    sim_inst = UnityInstance(os.path.join(PIPE_PATH, PIPE_NAME), exec_args if RUN_EXECUTABLE else None,
-                              no_timeout=True)
 
     if RUN_EXECUTABLE:
         print(f"Running Simulator: {SIMULATOR_PATH}")
     else:
         print(f"Connecting to Simulator without subprocess")
+        sim_inst = UnityInstance(os.path.join(PIPE_PATH, pipe_name(0)), None, no_timeout=True)
 
-    with tqdm(range(EPOCH_COUNT), desc='Epochs') as progress:
-        for i in progress:
-            # Create the initial states of the sessions.
-            sessions = pd.DataFrame(columns=["Initial Condition", "Score"])
-            for i in range(SESSIONS_PER_EPOCH):
-                sessions.loc[len(sessions.index)] = [CartPoleData(), 0]
+    exec_args = dict()
+    exec_args["simulator_path"] = SIMULATOR_PATH
 
-            sim_inst.run_experiment("cart_pole")
-            execute_epoch(sessions, sim_inst)
+    # Create a worker for each process.
+    mp_workers: list[Worker] = []
+    for i in range(PROCESS_COUNT):
+        if RUN_EXECUTABLE:
+            _exec_args = dict(exec_args)
+            _exec_args["simulator_args"] = SIMULATOR_ARGS + ["-p", pipe_name(i)]
+            _sim_args = (os.path.join(PIPE_PATH, pipe_name(i)), _exec_args)
+            _sim_kwargs = {"no_timeout": True}
 
-            avg_score = np.mean(sessions["Score"])
-            progress.set_postfix_str(f'Last Mean Score: {avg_score}')
-            if STATS > 0:
-                avg_performance_per_epoch.append(avg_score)
+            _worker = Worker(
+                _sim_args,
+                _sim_kwargs,
+                random.randint(0, 1000000),
+                quit_simulator_on_close=True
+            )
+        else:
+            _worker = Worker(None, None, random.randint(0, 1000000), simulator_instance=sim_inst)
+        mp_workers.append(_worker)
 
-    sim_inst.quit()
+    if RUN_EXECUTABLE:
+        # Variables for cross-process communication.
+        counter = mp.Value('i', 0)
+        return_queue = mp.Queue(PROCESS_COUNT)
+
+        # Create the processes.
+        processes: list[mp.Process] = []
+        for i in range(PROCESS_COUNT):
+            _p_args = (mp_workers[i], model, counter, EPOCH_COUNT, return_queue)
+            _p: mp.Process = mp.Process(target=worker_process, args=_p_args)
+            _p.start()
+            processes.append(_p)
+
+        per_process_statistics = []
+        # Poll that the processes have finished, updating a progress bar as we wait.
+        with tqdm(total=EPOCH_COUNT * PROCESS_COUNT, desc='Epochs') as progress:
+            running_processes = list(processes)
+            last_counter = 0
+            while len(running_processes) > 0:
+                _to_remove: list[int] = []
+                # Poll the processes that have finished.
+                for i, _p in enumerate(running_processes):
+                    _p.join(1 / PROCESS_COUNT)
+                    if _p.exitcode is not None:
+                        _to_remove.append(i)
+
+                # Update the progress bar on how many epochs have been completed.
+                current_counter = counter.value
+                progress.update(current_counter - last_counter)
+                last_counter = current_counter
+
+                # Remove the processes that have finished.
+                for i in reversed(_to_remove):
+                    running_processes.pop(i)
+                    per_process_statistics.append(return_queue.get())
+
+        # Print the exit codes to ensure that the processes worked and terminate the processes.
+        print(f"Exit Codes: {list(_p.exitcode for _p in processes)}")
+        for _p in processes:
+            _p.terminate()
+
+        # Collect statistics for plotting.
+        statistics = [np.zeros(EPOCH_COUNT) for i in range(5)]
+        for process_stats in per_process_statistics:
+            for i, values in enumerate(process_stats):
+                statistics[i] += values
+
+        for i in range(len(statistics)):
+            statistics[i] /= EPOCH_COUNT
+
+    else:
+        # Run the worker on this process.
+        scores = []
+        with mp_workers[0] as worker:
+            for i in tqdm(range(EPOCH_COUNT)):
+                session_results: pd.DataFrame = worker.execute_epoch(1, learn=True)
+                scores.append(session_results.iloc[0]["Score"])
+
+        # Collect statistics
+        statistics = [scores, *worker.get_stats()]
 
     save_onnx()
 
+    stat_names = []
+
     if STATS > 0:
+        stat_names += ["Score"]
+    if STATS > 1:
+        stat_names += ["Actor Loss", "Critic Loss", "Cumulative Loss", "Weights"]
+
+    for i, stat_name in enumerate(stat_names):
         ax = plt.subplot(1, 1, 1)
-        plt.title(f"Performance over Sessions")
-        plt.ylabel(f"Score")
-        plt.xlabel(f"Session (first session at 1)")
-        plt.plot(np.arange(1, SESSIONS_PER_EPOCH * EPOCH_COUNT + 1, 1), scores)
+        plt.title(f"Mean {stat_name} over Epochs")
+        plt.ylabel(f"Mean {stat_name}")
+        plt.xlabel(f"Epoch (first epoch at 1)")
+        plt.plot(np.arange(1, EPOCH_COUNT + 1, 1), statistics[i])
         ax.grid()
 
         plt.show()
-
-    if STATS > 1:
-        plot_data = [
-            ('Actor', 'Loss', actor_losses),
-            ('Critic', 'Loss', critic_losses),
-            ('Cumulative', 'Loss', cumulative_losses),
-            ('Actor', 'Sum Weights', actor_sum_weights)
-        ]
-
-        for label, label_type, data in plot_data:
-            ax = plt.subplot(1, 1, 1)
-            plt.title(f"{label} {label_type} over Epochs")
-            plt.ylabel(label_type)
-            plt.xlabel(f"Epoch (first session at 1)")
-            plt.plot(np.arange(1, EPOCH_COUNT + 1, 1), data)
-            ax.grid()
-
-            plt.show()
 
     if DISPLAY_PERFORMANCE:
         display_performance()
