@@ -1,0 +1,19 @@
+{
+    "name": "werignac.CartPole.Agent.Editor",
+    "rootNamespace": "werignac.CartPole.Agent.Editor",
+    "references": [
+        "GUID:34c1d2b8bdf979a489bca99646d9e715",
+        "GUID:5c2b5ba89f9e74e418232e154bc5cc7a"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

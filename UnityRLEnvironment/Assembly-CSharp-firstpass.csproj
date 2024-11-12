@@ -892,6 +892,10 @@
       <Project>{BC1C6E14-7460-F43B-F89A-E0129E5DABD9}</Project>
       <Name>werignac.Communication</Name>
     </ProjectReference>
+    <ProjectReference Include="werignac.CartPole.Agent.Editor.csproj">
+      <Project>{0981170D-F610-CB5B-B2D3-570C78AAF4F9}</Project>
+      <Name>werignac.CartPole.Agent.Editor</Name>
+    </ProjectReference>
     <ProjectReference Include="werignac.RLEnvironment.Settings.Editors.csproj">
       <Project>{553FED90-A79D-EC82-67C7-C1B670B6ED4B}</Project>
       <Name>werignac.RLEnvironment.Settings.Editors</Name>

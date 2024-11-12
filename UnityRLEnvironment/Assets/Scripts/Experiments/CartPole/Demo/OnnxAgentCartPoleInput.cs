@@ -6,49 +6,31 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Unity.Barracuda;
 using System;
+using werignac.CartPole.Agent;
 
 namespace werignac.CartPole
 {
     public class OnnxAgentCartPoleInput : MonoBehaviour, ICartPoleIO
     {
 		[SerializeField]
-		private NNModel modelAsset;
-		private Model runtimeModel;
-		private IWorker worker;
+		private CP_AgentAsset m_agentAsset;
+
+		private CP_IAgent m_agent;
 
 		// Start is called before the first frame update
 		void Awake()
         {
-			string[] additionalOutputs = new string[] { "/2/Add_output_0" };
-			runtimeModel = ModelLoader.Load(modelAsset);
-			worker = WorkerFactory.CreateWorker( WorkerFactory.Type.CSharp, runtimeModel, additionalOutputs, false);
+			m_agent = m_agentAsset.LoadAgent();
         }
 
 		public virtual CartPoleCommand GetCommand(CartPoleState state)
 		{
-			float[] tensorData = new float[] { state.CartPosition, state.CartVelocity, state.PoleAngle, state.PoleAngularVelocity, state.NormalizedWind};
-
-			Tensor input = new Tensor(1, 5, tensorData);
-
-			IEnumerator manualSchedule = worker.StartManualSchedule(input);
-			while (manualSchedule.MoveNext()) { }
-			Tensor output = worker.PeekOutput("/2/Add_output_0");
-
-			System.Random rng = new System.Random();
-			CartPoleCommand command;
-			
-			// TODO: Figure out why Softmax is applied on the wrong direction.
-			command = output[0] > output[1] ? CartPoleCommand.RIGHT : CartPoleCommand.LEFT;
-
-			input.Dispose();
-			output.Dispose();
-
-			return command;
+			return m_agent.Evaluate(state, out var additionalOutput);
 		}
 
 		private void OnDestroy()
 		{
-			worker.Dispose();
+			m_agent.Dispose();
 		}
 	}
 }

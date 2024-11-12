@@ -55,6 +55,39 @@ MonoBehaviour:
   pole: {fileID: 7006741812253672311}
   cart: {fileID: 1091201651675593353}
   lossPenalty: 10
+  m_cartDistanceReward:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.333
+      value: 1
+      inSlope: Infinity
+      outSlope: -1.4992504
+      tangentMode: 71
+      weightedMode: 0
+      inWeight: 0.46666664
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: -1.4992504
+      outSlope: -1
+      tangentMode: 5
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!171741748 &7644093367911885124
 ArticulationBody:
   m_ObjectHideFlags: 0

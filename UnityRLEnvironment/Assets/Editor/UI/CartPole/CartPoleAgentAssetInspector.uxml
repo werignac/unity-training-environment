@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <ui:Label tabindex="-1" text="Here is my custom label." display-tooltip-when-elided="true" />
+    <uie:PropertyField label="Neural Net" binding-path="modelAsset" class="unity-base-field__aligned" />
+</ui:UXML>

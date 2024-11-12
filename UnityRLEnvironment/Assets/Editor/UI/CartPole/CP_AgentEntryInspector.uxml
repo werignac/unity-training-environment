@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <ui:TextField picking-mode="Ignore" label="Name" binding-path="m_agentName" name="Name" />
+    <uie:PropertyField label="Model Asset" binding-path="m_agentAsset" name="Asset" style="flex-direction: row;" />
+    <uie:PropertyField name="Icon" binding-path="m_agentIcon" style="flex-grow: 0;" />
+    <ui:TextField picking-mode="Ignore" label="Description" name="Description" multiline="true" binding-path="m_agentDescription" style="min-height: 80px; height: auto; max-height: 200px; flex-shrink: 1;" />
+</ui:UXML>

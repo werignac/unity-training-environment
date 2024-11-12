@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f57f41772f50fbd4e9bc1203c40343ef, type: 3}
+  m_Name: CartPoleAgentGlobals
+  m_EditorClassIdentifier: 
+  m_agents:
+  - m_agentName: Conveyor-Blind REINFORCE
+    m_agentAsset: {fileID: 11400000, guid: b79785e7da12c4f4b9b15f746d4b466b, type: 2}
+    m_agentIcon: {fileID: 0}
+    m_agentDescription: 'This agent was trained using REINFORCE without any knowledge
+      of the conveyor.
+
+      Though, in training it was affected by a random forces,
+      the agent is not fed the state of the conveyor.
+
+      Note: This agent was
+      trained with an old wind system instead of the modern conveyor.'
+  - m_agentName: Conveyor-Sensitive REINFORCE
+    m_agentAsset: {fileID: 11400000, guid: a1d65f9dba68bd14c83af943f80257de, type: 2}
+    m_agentIcon: {fileID: 0}
+    m_agentDescription: 'This agent was trained using REINFORCE with knowledge of
+      the conveyor.
+
+      The agent is fed the state of the conveyor.
+
+      Note:
+      This agent was trained with an old wind system instead of the modern conveyor.'
+  - m_agentName: Actor Critic
+    m_agentAsset: {fileID: 11400000, guid: d930cf3bc445f8c45bdb3682af7aaa6c, type: 2}
+    m_agentIcon: {fileID: 0}
+    m_agentDescription: This agent was trained using Actor-Critic.
+  - m_agentName: No Agent
+    m_agentAsset: {fileID: 11400000, guid: 3fecaf4ed9662334c8609418344c8525, type: 2}
+    m_agentIcon: {fileID: 0}
+    m_agentDescription: When this option is active, no decisions will be made.

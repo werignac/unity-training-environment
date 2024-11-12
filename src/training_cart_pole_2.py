@@ -92,8 +92,12 @@ class ActorCritic(nn.Module): #B
         self.l3 = nn.Linear(50,25)
         self.critic_lin1 = nn.Linear(25,1)
     def forward(self,x):
-        x = F.normalize(x,dim=0)
-        y = F.relu(self.l1(x))
+        magnitude = torch.sqrt(torch.sum(torch.pow(x, 2)))
+        x = torch.div(x, magnitude)
+        # Safe divide. Nan values are created when magnitude == 0.
+        x[x != x] = 0
+
+        y = F.relu(self.l1(x.detach()))
         y = F.relu(self.l2(y))
         actor = F.log_softmax(self.actor_lin1(y),dim=0) #C
         c = F.relu(self.l3(y.detach()))

@@ -43,10 +43,13 @@ namespace werignac.CartPole
 		[SerializeField, Min(0)]
 		private int lossPenalty = 10;
 
+		[SerializeField]
+		private AnimationCurve m_cartDistanceReward;
+
 		/// <summary>
 		/// Running score. +1 for each frame without losing.
 		/// </summary>
-		private int score = 0;
+		private float score = 0;
 
 		public float Evaluate(GameObject creature, out bool terminateEarly)
 		{
@@ -62,7 +65,7 @@ namespace werignac.CartPole
 			}
 			else
 			{
-				score += 1;
+				score += m_cartDistanceReward.Evaluate(Mathf.Abs(cart.transform.position.z / cartLimit));
 			}
 
 			return score;

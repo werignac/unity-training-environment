@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 namespace werignac.RLEnvironment.Settings.Editors
 {
 	// Register a SettingsProvider using IMGUI for the drawing framework:
-	static class MyCustomSettingsIMGUIRegister
+	static class RLSettingsIMGUIRegister
 	{
 		internal static SerializedObject GetSerializedSettings()
 		{
@@ -18,7 +18,7 @@ namespace werignac.RLEnvironment.Settings.Editors
 		}
 
 		[SettingsProvider]
-		public static SettingsProvider CreateMyCustomSettingsProvider()
+		public static SettingsProvider CreateRLSettingsProvider()
 		{
 			// First parameter is the path in the Settings window.
 			// Second parameter is the scope of this setting: it only appears in the Project Settings window.

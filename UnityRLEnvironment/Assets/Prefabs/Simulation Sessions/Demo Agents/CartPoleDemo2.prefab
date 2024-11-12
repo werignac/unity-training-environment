@@ -270,7 +270,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4446d57233c8aca4482236977e6203eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  modelAsset: {fileID: 5022602860645237092, guid: 62946e224e09b8949888a97eb5a75bc1, type: 3}
+  m_agentAsset: {fileID: 11400000, guid: d930cf3bc445f8c45bdb3682af7aaa6c, type: 2}
 --- !u!114 &5740639141294843936
 MonoBehaviour:
   m_ObjectHideFlags: 0
